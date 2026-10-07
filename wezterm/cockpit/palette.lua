@@ -103,7 +103,8 @@ function M.open(window, pane)
         title = 'Cockpit',
         description = 'type to filter (fuzzy) · Esc cancels',
         fuzzy = true,
-        entries = entries,
+        -- NOTE: this WezTerm build uses `choices` (not `entries`)
+        choices = entries,
         action = wezterm.action_callback(function(w2, p2, _, id)
           local fn = actions[id]
           if fn then

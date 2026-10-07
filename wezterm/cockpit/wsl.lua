@@ -1,18 +1,22 @@
--- wsl.lua — WezTerm (Windows) ⇄ WSL Debian bridge:
---   * run commands inside WSL (pickers, detection)
---   * read the state file written by `ck status` (cheap: no processes)
-local wezterm = require 'wezterm'
+-- wsl.lua — WezTerm (Windows) ⇄ WSL Debian bridge.
+-- IMPORTANT (verified on this machine, WezTerm 20240203):
+--   * wezterm.run_child_process cannot spawn wsl.exe here (silently ok=false)
+--   * io.popen DOES work, but cmd.exe mangles any payload containing quotes
+-- Solution: io.popen + QUOTE-FREE command lines — the repo's ck script is
+-- invoked directly with plain space-separated arguments. Never pass quotes,
+-- parentheses or shell syntax inside `args`; put that logic inside the ck
+-- scripts themselves (they run under a real bash).
 local cfg = require 'cockpit.config'
 
 local M = {}
 
--- Windows UNC path to the user's state file inside WSL.
+-- Ruta UNC de Windows hacia el archivo de estado del usuario en WSL.
 function M.state_path()
   return '\\\\wsl.localhost\\' .. cfg.distro .. '\\home\\' .. cfg.wsl_user .. '\\'
     .. (cfg.state_rel_path:gsub('/', '\\'))
 end
 
--- Reads the key=value state written by ck-status. Returns a table (empty on error).
+-- Lee el estado key=value escrito por ck-status. Devuelve tabla (vacía si error).
 function M.read_state()
   local ok, res = pcall(function()
     local f = io.open(M.state_path(), 'r')
@@ -38,49 +42,27 @@ function M.read_state()
   return {}
 end
 
--- Runs cmd with a login bash inside WSL. opts.cwd = initial Linux path.
--- Returns stdout or nil. Network-touching commands must carry `timeout`.
-function M.run(cmd, opts)
-  opts = opts or {}
-  local args = { 'wsl.exe', '-d', cfg.distro }
-  if opts.cwd then
-    table.insert(args, '--cd')
-    table.insert(args, opts.cwd)
+-- Runs a ck subcommand inside WSL. args = 'k8s pods --names' (quote-free!).
+-- opts.cwd = initial Linux path (must not contain spaces).
+-- Returns stdout (string, possibly empty) or nil when spawning failed.
+function M.ck(args, opts)
+  local s = '"' .. cfg.wsl_exe .. '" -d ' .. cfg.distro
+  if opts and opts.cwd then
+    s = s .. ' --cd ' .. opts.cwd
   end
-  table.insert(args, '--')
-  table.insert(args, 'bash')
-  table.insert(args, '-lc')
-  table.insert(args, cmd)
-  local ok, out = wezterm.run_child_process(args)
-  if ok then
-    return out
-  end
-  return nil
-end
-
--- Same as run() but returns the list of non-empty lines (or nil).
-function M.lines(cmd, opts)
-  local out = M.run(cmd, opts)
-  if not out then
+  s = s .. ' -- ' .. cfg.ck_path .. ' ' .. args .. ' 2>/dev/null'
+  local okf, f = pcall(io.popen, s)
+  if not okf or not f then
     return nil
   end
-  local res = {}
-  for line in out:gmatch '[^\r\n]+' do
-    table.insert(res, line)
-  end
-  return res
+  local out = f:read '*a'
+  pcall(function()
+    f:close()
+  end)
+  return out
 end
 
--- Runs a ck subcommand using an absolute path (non-interactive shells may not
--- have ~/.local/bin on PATH). args = 'k8s pods --names'
-function M.ck(args, opts)
-  local cmd = 'CK="$HOME/.local/bin/ck"; '
-    .. '[ -x "$CK" ] || CK="$(command -v ck 2>/dev/null)"; '
-    .. '[ -n "$CK" ] && "$CK" ' .. args .. ' 2>/dev/null'
-  return M.run(cmd, opts)
-end
-
--- Does the current pane belong to the cockpit's WSL domain?
+-- ¿El pane actual pertenece al dominio WSL del cockpit?
 function M.pane_is_wsl(pane)
   local ok, name = pcall(function()
     return pane:get_domain_name()
@@ -88,7 +70,7 @@ function M.pane_is_wsl(pane)
   return ok and name == 'WSL:' .. cfg.distro
 end
 
--- Pane cwd from OSC 7 (emitted by scripts/shell-hook.sh) → '/home/...' | nil
+-- cwd del pane según OSC 7 (lo emite scripts/shell-hook.sh) → '/home/...' | nil
 function M.pane_cwd(pane)
   local ok, url = pcall(function()
     return pane:get_current_working_dir()

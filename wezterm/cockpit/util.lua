@@ -75,7 +75,8 @@ function M.pick(window, pane, p)
       title = p.title,
       description = 'Enter to select · Esc to cancel',
       fuzzy = true,
-      entries = entries,
+      -- NOTE: this WezTerm build uses `choices` (not `entries`)
+      choices = entries,
       action = wezterm.action_callback(function(w2, p2, _, sel)
         if sel and sel ~= '' then
           local chosen = sel

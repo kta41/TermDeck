@@ -3,6 +3,8 @@
 local M = {
   distro = 'Debian',                    -- matches default_domain 'WSL:Debian'
   wsl_user = 'Kta41',                   -- $USER inside WSL (UNC path for state)
+  wsl_exe = 'C:\\Windows\\System32\\wsl.exe', -- absolute path (safer for spawning)
+  ck_path = '/mnt/c/dev/dotfiles/scripts/ck', -- called without a shell: no quotes/spaces allowed
   state_rel_path = '.cache/terminal-cockpit/state', -- written by `ck status`
   caps_ttl = 30,                        -- seconds `ck doctor` is cached in the palette
   -- Staleness window for the right status. Generous on purpose: WezTerm runs on
