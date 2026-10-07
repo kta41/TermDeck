@@ -34,6 +34,26 @@ case "$cmd" in
       done
     fi
     ;;
+  palette)
+    # one-shot context for the WezTerm palette: caps + repo + provider + CI.
+    # Local operations only (no network) so it is fast; run it in the pane cwd.
+    caps=""
+    for t in git kubectl k3s gh glab argocd jq curl; do
+      if ck_have "$t"; then caps="$caps$t=1 "; else caps="$caps$t=0 "; fi
+    done
+    inrepo=0 prov="none" url="" ci=none
+    if ck_have git && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+      inrepo=1
+      p="$(ck_git_provider || true)"
+      [ -n "$p" ] && prov="$p"
+      url="$(ck_git_https || true)"
+      root="$(ck_git_root)"
+      if ls "$root"/.github/workflows/* >/dev/null 2>&1; then ci=actions
+      elif [ -f "$root/.gitlab-ci.yml" ]; then ci=gitlab
+      fi
+    fi
+    echo "$caps in_repo=$inrepo provider=$prov url=$url ci=$ci"
+    ;;
   help|*)
     cat <<'EOF'
 ck — terminal cockpit (WezTerm + Starship)

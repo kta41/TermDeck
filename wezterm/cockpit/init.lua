@@ -19,6 +19,14 @@ function M.setup(config)
     action = wezterm.action_callback(palette.open),
   })
 
+  -- alternative trigger without the leader: handy and a diagnostic aid
+  -- (if F9 opens the palette but LEADER+P does not, the issue is key timing:
+  -- press Ctrl+A, RELEASE, then press p within the 1s leader timeout)
+  table.insert(config.keys, {
+    key = 'F9',
+    action = wezterm.action_callback(palette.open),
+  })
+
   return config
 end
 

@@ -60,7 +60,12 @@ WezTerm (UI layer)                      Starship (prompt layer)
 | Shortcut | Action |
 | :--- | :--- |
 | `LEADER` then `P` | Cockpit fuzzy palette (Git / Repo / K8s / Argo / CI / PR) |
+| `F9` | Same palette, no leader needed (alternative trigger) |
 | All other shortcuts | Unchanged (tmux-style, `LEADER` + `1..9`, etc.) |
+
+> **Leader timing:** press `Ctrl+A`, **release it**, then press `p` within the
+> 1-second leader timeout. Holding `Ctrl` while pressing `p` sends `CTRL+P`
+> to the shell instead. If in doubt, use `F9`.
 
 ### Palette Highlights
 
