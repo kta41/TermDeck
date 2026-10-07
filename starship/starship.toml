@@ -2,6 +2,7 @@ format = """
  $directory\
  $git_branch\
  $git_status\
+ $kubernetes\
  $python\
  $nodejs\
  $rust\
@@ -46,3 +47,11 @@ format = "[$user ]($style)"
 [character]
 success_symbol = "[>](bold green)"
 error_symbol = "[>](bold red)"
+
+# Contexto k8s actual: lee el kubeconfig, sin llamadas al API → rápido y seguro.
+# Solo contexto/namespace; la salud del clúster la pinta WezTerm (status derecho).
+[kubernetes]
+disabled = false
+symbol = "☸ "
+style = "bold #89b4fa"
+format = '[$symbol$context( · $namespace)]($style) '

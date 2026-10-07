@@ -1,0 +1,8 @@
+# Normalización: los scripts del cockpit viven en /mnt/c y se ejecutan en WSL,
+# por lo que DEBEN usar LF (CRLF rompe bash). El resto se normaliza al commit.
+* text=auto
+scripts/** text eol=lf
+*.lua text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
+*.ttf binary

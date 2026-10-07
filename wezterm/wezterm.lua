@@ -64,36 +64,29 @@ config.term = 'xterm-256color'
 -- ============ Teclas estilo tmux ============
 config.leader = { key = 'a', mods = 'CTRL', timeout_milliseconds = 1000 }
 
+local ctrl_c_copy = wezterm.action_callback(function(window, pane)
+  local sel = window:get_selection_text_for_pane(pane)
+  if sel and sel ~= '' then
+    window:perform_action(act.CopyTo 'ClipboardAndPrimarySelection', pane)
+  else
+    window:perform_action(act.SendKey { key = 'c', mods = 'CTRL' }, pane)
+  end
+end)
 config.keys = {
-  -- Panes (siempre en el mismo dominio/distro que el pane actual)
-  { key = 'd', mods = 'LEADER',         action = act.SplitHorizontal { domain = 'CurrentPaneDomain' } },
-  { key = 'd', mods = 'LEADER|SHIFT',   action = act.SplitVertical   { domain = 'CurrentPaneDomain' } },
-  { key = 'x', mods = 'LEADER',         action = act.CloseCurrentPane { confirm = true } },
-  { key = 'z', mods = 'LEADER',         action = act.TogglePaneZoomState },
-  { key = 'o', mods = 'LEADER',         action = act.ActivatePaneDirection 'Next' },
-
-  -- Navegación vim-style
-  { key = 'h', mods = 'LEADER', action = act.ActivatePaneDirection 'Left' },
-  { key = 'j', mods = 'LEADER', action = act.ActivatePaneDirection 'Down' },
-  { key = 'k', mods = 'LEADER', action = act.ActivatePaneDirection 'Up' },
-  { key = 'l', mods = 'LEADER', action = act.ActivatePaneDirection 'Right' },
-
-  -- Resize (mismo esquema en mayúsculas)
-  { key = 'h', mods = 'LEADER|SHIFT', action = act.AdjustPaneSize { 'Left',  2 } },
-  { key = 'j', mods = 'LEADER|SHIFT', action = act.AdjustPaneSize { 'Down',  2 } },
-  { key = 'k', mods = 'LEADER|SHIFT', action = act.AdjustPaneSize { 'Up',    2 } },
-  { key = 'l', mods = 'LEADER|SHIFT', action = act.AdjustPaneSize { 'Right', 2 } },
-  { key = 'f', mods = 'LEADER', action = act.ToggleFullScreen },
-  -- Tabs y launcher
-  { key = 't', mods = 'LEADER', action = act.SpawnTab 'CurrentPaneDomain' },
-  { key = 's', mods = 'LEADER', action = act.ShowLauncher },
-  { key = 'n', mods = 'LEADER', action = act.ActivateTabRelative( 1) },
-  { key = 'p', mods = 'LEADER', action = act.ActivateTabRelative(-1) },
-
-  -- Clipboard / copy mode
-  { key = 'y', mods = 'LEADER', action = act.CopyTo 'Clipboard' },
-  { key = 'v', mods = 'LEADER|SHIFT', action = act.PasteFrom 'Clipboard' },
-  { key = '[', mods = 'LEADER', action = act.ActivateCopyMode },
+  { key = 'c', mods = 'CTRL', action = ctrl_c_copy },
+  { key = 'v', mods = 'CTRL', action = act.PasteFrom 'Clipboard' },
+  { key = 'w', mods = 'CTRL|SHIFT', action = act.CloseCurrentPane { confirm = true } },
+  { key = 'd', mods = 'CTRL|SHIFT', action = act.SplitHorizontal { domain = 'CurrentPaneDomain' } },
+  { key = 'b', mods = 'CTRL|SHIFT', action = act.SplitVertical   { domain = 'CurrentPaneDomain' } },
+  { key = 'LeftArrow',  mods = 'CTRL|SHIFT', action = act.ActivatePaneDirection 'Left' },
+  { key = 'RightArrow', mods = 'CTRL|SHIFT', action = act.ActivatePaneDirection 'Right' },
+  { key = 'UpArrow',    mods = 'CTRL|SHIFT', action = act.ActivatePaneDirection 'Up' },
+  { key = 'DownArrow',  mods = 'CTRL|SHIFT', action = act.ActivatePaneDirection 'Down' },
+  { key = 'LeftArrow',  mods = 'CTRL|ALT', action = act.AdjustPaneSize { 'Left',  2 } },
+  { key = 'RightArrow', mods = 'CTRL|ALT', action = act.AdjustPaneSize { 'Right', 2 } },
+  { key = 'UpArrow',    mods = 'CTRL|ALT', action = act.AdjustPaneSize { 'Up',    2 } },
+  { key = 'DownArrow',  mods = 'CTRL|ALT', action = act.AdjustPaneSize { 'Down',  2 } },
+  { key = 'z', mods = 'CTRL|SHIFT', action = act.TogglePaneZoomState },
 }
 
 -- LEADER + 1..9 salta a la pestaña N (aquí es donde Lua brilla)
@@ -102,6 +95,17 @@ for i = 1, 9 do
     key = tostring(i), mods = 'LEADER',
     action = act.ActivateTab(i - 1),
   })
+end
+
+-- ============ Cockpit DevOps (capa modular) ============
+-- Toda la funcionalidad nueva vive en wezterm/cockpit/*.lua (paleta LEADER+P,
+-- status derecho, selectores). Si algo de esa capa falla, esta config base
+-- sigue funcionando exactamente igual (por eso el pcall).
+local cockpit_ok, cockpit = pcall(require, 'cockpit')
+if cockpit_ok then
+  cockpit.setup(config)
+else
+  wezterm.log_error('cockpit no disponible: ' .. tostring(cockpit))
 end
 
 return config

@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# ck-argocd — ArgoCD contextual. Detecta qué hay disponible:
+#   - CLI argocd instalado y con sesión (argocd context) → operaciones completas
+#   - sin CLI pero con CRD de aplicaciones en el clúster → solo lectura vía kubectl
+# Subcomandos: detect [-q] | apps | names | get|sync|refresh|history|logs <app>
+set -u
+
+CK_SRC_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+# shellcheck source=lib/common.sh
+source "$CK_SRC_DIR/lib/common.sh"
+
+sub="${1:-detect}"; shift || true
+
+# modo disponible: cli | kube | none
+mode() {
+  if ck_have argocd && timeout "$CK_API_TIMEOUT" argocd context >/dev/null 2>&1; then
+    echo cli
+  elif [ "$(ck_state_get argocd_kube)" = "1" ]; then
+    echo kube
+  else
+    echo none
+  fi
+}
+
+case "$sub" in
+  detect)
+    quiet=0; [ "${1:-}" = "-q" ] && quiet=1
+    m="$(mode)"
+    cli=0 ready=0 kube=0
+    ck_have argocd && cli=1
+    [ "$m" = "cli" ] && ready=1
+    [ "$(ck_state_get argocd_kube)" = "1" ] && kube=1
+    if [ "$quiet" -eq 1 ]; then
+      echo "cli=$cli ready=$ready kube=$kube"
+    else
+      echo "argocd CLI instalado: $([ $cli -eq 1 ] && echo sí || echo no)"
+      echo "sesión CLI válida:    $([ $ready -eq 1 ] && echo sí || echo no)"
+      echo "ArgoCD en el clúster: $([ $kube -eq 1 ] && echo sí || echo no / desconocido)"
+      echo "modo de operación:    $m"
+    fi
+    ;;
+  apps)
+    m="$(mode)"
+    case "$m" in
+      cli)  exec argocd app list ;;
+      kube) ck_k8s_run get applications.argoproj.io -A ;;
+      *) echo "ArgoCD no disponible (ni CLI con sesión ni CRD en clúster)" >&2; exit 1 ;;
+    esac
+    ;;
+  names)
+    m="$(mode)"
+    case "$m" in
+      cli)  timeout "$CK_K_TIMEOUT" argocd app list -o name 2>/dev/null ;;
+      kube) ck_kubectl get applications.argoproj.io -A -o name 2>/dev/null | sed 's|^[^/]*/||' ;;
+      *) exit 1 ;;
+    esac
+    ;;
+  get|sync|refresh|history|logs)
+    app="${1:?falta el nombre de la app}"
+    if [ "$(mode)" != "cli" ]; then
+      echo "'argocd app $sub' requiere el CLI argocd con sesión (argocd login)" >&2
+      exit 1
+    fi
+    exec argocd app "$sub" "$app"
+    ;;
+  *)
+    echo "uso: ck argocd detect|apps|names|get|sync|refresh|history|logs <app>" >&2
+    exit 2
+    ;;
+esac

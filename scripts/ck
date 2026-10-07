@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# ck — dispatcher del terminal cockpit (git / k8s / ci / argocd / status / doctor)
+# Los módulos también funcionan solos: ck-git, ck-k8s, ck-ci, ck-argocd, ck-status
+# Uso: ck <grupo> <subcomando> [args...]   |   ck help
+set -u
+
+CK_SRC_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+# shellcheck source=lib/common.sh
+source "$CK_SRC_DIR/lib/common.sh"
+
+cmd="${1:-help}"
+[ $# -gt 0 ] && shift
+
+case "$cmd" in
+  git|k8s|ci|argocd|status)
+    exec "$CK_SRC_DIR/ck-$cmd" "$@"
+    ;;
+  doctor)
+    quiet=0
+    for a in "$@"; do [ "$a" = "-q" ] && quiet=1; done
+    if [ "$quiet" -eq 1 ]; then
+      for t in git kubectl k3s gh glab argocd jq curl; do
+        if ck_have "$t"; then printf '%s=1 ' "$t"; else printf '%s=0 ' "$t"; fi
+      done
+      echo
+    else
+      echo "entorno del cockpit (WSL):"
+      for t in git kubectl k3s gh glab argocd jq curl; do
+        if ck_have "$t"; then
+          printf '  %-8s %s✓%s %s\n' "$t" "$CK_C_G" "$CK_C_0" "$(command -v "$t")"
+        else
+          printf '  %-8s %s✗%s no instalado\n' "$t" "$CK_C_R" "$CK_C_0"
+        fi
+      done
+    fi
+    ;;
+  help|*)
+    cat <<'EOF'
+ck — terminal cockpit (WezTerm + Starship)
+
+  ck git info                  repositorio, rama, delante/detrás, sucio
+  ck git branches              ramas locales (para selectores)
+  ck git url repo|pulls|ci     URL web según el proveedor del remote
+  ck git provider              proveedor detectado (github/gitlab)
+  ck k8s contexts|namespaces|pods|deployments|services|events [--names] [ns]
+  ck ci detect [-q]|runs|failed|view <id>|rerun <id>|page
+  ck argocd detect [-q]|apps|names|get|sync|refresh|history|logs <app>
+  ck status [--force] [--quiet]  refresca el estado que pinta WezTerm
+  ck doctor [-q]                herramientas detectadas
+EOF
+    ;;
+esac

@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# ck-k8s — listados contextuales de Kubernetes (kubectl siempre con timeout).
+# El API de k3s puede estar caído: nada de aquí cuelga el terminal.
+# Subcomandos [--names = solo nombres, para los selectores de la paleta]:
+#   contexts | namespaces | pods [ns] | deployments [ns] | services [ns] | events [ns]
+set -u
+
+CK_SRC_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+# shellcheck source=lib/common.sh
+source "$CK_SRC_DIR/lib/common.sh"
+
+ck_have kubectl || { echo "kubectl no está instalado en WSL" >&2; exit 1; }
+
+names=0
+args=()
+for a in "$@"; do
+  case "$a" in
+    --names|-n) names=1 ;;
+    *) args+=("$a") ;;
+  esac
+done
+# (bash >= 4.4: expandir un array vacío con "${args[@]}" es seguro)
+[ ${#args[@]} -gt 0 ] && set -- "${args[@]}" || set --
+
+# namespace actual (offline, desde el kubeconfig)
+current_ns() {
+  local ns
+  ns="$(timeout 3 kubectl config view --minify -o jsonpath='{..namespace}' 2>/dev/null || true)"
+  [ -n "$ns" ] || ns="default"
+  printf '%s' "$ns"
+}
+
+list() { # list <recurso> [namespace] [--names]
+  local res="$1" ns="${2:-}" only="${3:-table}"
+  [ -n "$ns" ] || ns="$(current_ns)"
+  if [ "$only" = "names" ]; then
+    ck_kubectl get "$res" -n "$ns" -o name 2>/dev/null | sed 's|^[^/]*/||'
+  else
+    ck_k8s_run get "$res" -n "$ns"
+  fi
+}
+
+sub="${1:-pods}"; shift || true
+
+case "$sub" in
+  contexts)
+    [ "$names" -eq 1 ] && timeout 3 kubectl config get-contexts -o name || ck_k8s_run config get-contexts
+    ;;
+  namespaces|ns)
+    if [ "$names" -eq 1 ]; then
+      ck_kubectl get ns -o name 2>/dev/null | sed 's|^[^/]*/||'
+    else
+      ck_k8s_run get ns
+    fi
+    ;;
+  pods)          list pods "${1:-}" "$([ $names -eq 1 ] && echo names || echo table)" ;;
+  deployments)   list deployments "${1:-}" "$([ $names -eq 1 ] && echo names || echo table)" ;;
+  services)      list services "${1:-}" "$([ $names -eq 1 ] && echo names || echo table)" ;;
+  events)
+    ns="$(current_ns)"
+    ck_k8s_run get events -n "$ns" --sort-by=.lastTimestamp
+    ;;
+  *)
+    echo "uso: ck k8s contexts|namespaces|pods|deployments|services|events [--names] [ns]" >&2
+    exit 2
+    ;;
+esac

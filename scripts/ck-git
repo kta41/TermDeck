@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# ck-git — contexto git del directorio actual.
+# Subcomandos: info | branches | provider [-q] | url repo|pulls|ci
+set -u
+
+CK_SRC_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+# shellcheck source=lib/common.sh
+source "$CK_SRC_DIR/lib/common.sh"
+
+sub="${1:-info}"; shift || true
+
+ck_git_root >/dev/null || { echo "no estás dentro de un repositorio git" >&2; exit 1; }
+
+case "$sub" in
+  info)
+    branch="$(git branch --show-current)"
+    # rev-list --count separa las dos cifras con un TAB
+    counts="$(git rev-list --left-right --count '@{upstream}...HEAD' 2>/dev/null || printf '0\t0')"
+    counts="${counts//$'\t'/ }"
+    behind="${counts%% *}"; ahead="${counts##* }"
+    dirty="$(git status --porcelain | wc -l | tr -d ' ')"
+    printf '%s  %s%s%s' "$CK_C_B" "$(basename "$(ck_git_root)")" "$CK_C_0" "$CK_C_Y"
+    [ -n "$branch" ] && printf ' [%s]' "$branch" || printf ' [DETACHED]'
+    printf '%s' "$CK_C_0"
+    printf ' ↑%s ↓%s' "$ahead" "$behind"
+    if [ "$dirty" -gt 0 ]; then
+      printf ' %s*%s cambios%s' "$CK_C_Y" "$dirty" "$CK_C_0"
+    else
+      printf ' %slimpio%s' "$CK_C_G" "$CK_C_0"
+    fi
+    prov="$(ck_git_provider || true)"
+    [ -n "$prov" ] && printf ' · %s' "$prov"
+    echo
+    ;;
+  branches)
+    git for-each-ref --format='%(refname:short)' refs/heads
+    ;;
+  provider)
+    quiet=0; [ "${1:-}" = "-q" ] && quiet=1
+    prov="$(ck_git_provider || true)"
+    [ "$quiet" -eq 1 ] || { [ -n "$prov" ] || prov="desconocido"; echo "proveedor: $prov"; }
+    if [ -n "$prov" ]; then
+      url="$(ck_git_https)"
+      [ "$quiet" -eq 1 ] && echo "provider=$prov url=$url"
+    else
+      [ "$quiet" -eq 1 ] && echo "provider=none url="
+      exit 1
+    fi
+    ;;
+  url)
+    what="${1:-repo}"
+    base="$(ck_git_https)" || { echo "remote no reconocido" >&2; exit 1; }
+    prov="$(ck_git_provider || true)"
+    case "$prov:$what" in
+      github:repo)  echo "$base" ;;
+      github:pulls) echo "$base/pulls" ;;
+      github:ci)    echo "$base/actions" ;;
+      gitlab:repo)  echo "$base" ;;
+      gitlab:pulls) echo "$base/-/merge_requests" ;;
+      gitlab:ci)    echo "$base/-/pipelines" ;;
+      *)
+        echo "no sé construir la URL '$what' para el proveedor '${prov:-?}'" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+  *)
+    echo "uso: ck git info|branches|provider [-q]|url repo|pulls|ci" >&2
+    exit 2
+    ;;
+esac
