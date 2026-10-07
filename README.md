@@ -1,89 +1,95 @@
 # dotfiles — terminal cockpit (WezTerm + Starship)
 
-Repositorio de configuración **en vivo**: la config se consume por symlink, no
-se copia.
+A **live** configuration repository: configs are consumed through symlinks,
+never copied.
 
 ```
-Windows:  C:\Users\eltom\.config\wezterm\wezterm.lua  → wezterm/wezterm.lua
-          C:\Users\eltom\.config\wezterm\fonts        → wezterm/fonts
-          C:\Users\eltom\.config\wezterm\cockpit      → wezterm/cockpit   (nuevo)
+Windows:  %USERPROFILE%\.config\wezterm\wezterm.lua  → wezterm/wezterm.lua
+          %USERPROFILE%\.config\wezterm\fonts        → wezterm/fonts
+          %USERPROFILE%\.config\wezterm\cockpit      → wezterm/cockpit
 WSL:      ~/.config/starship.toml                     → starship/starship.toml
-          ~/.local/bin/ck*                            → scripts/ck*        (nuevo)
+          ~/.local/bin/ck*                            → scripts/ck*
 ```
 
-## Arquitectura
+## Architecture
 
 ```
-WezTerm (UI)                          Starship (prompt)
-  LEADER+P  paleta de acciones          git branch/status + ☸ contexto/ns
-  status derecho (lectura de archivo)   (solo lee kubeconfig: sin API calls)
+WezTerm (UI layer)                     Starship (prompt layer)
+  LEADER+P  action palette               git branch/status + ☸ k8s context/ns
+  right status bar (file read only)      (kubeconfig only: no API calls)
         │ SendString / InputSelector
         ▼
-  scripts/ck*  (bash en WSL, con timeout y caché — también usables a mano)
+  scripts/ck*  (bash inside WSL, timeout-guarded and cached — also
+               usable directly from any shell)
         ├── git        → git CLI
         ├── k8s        → kubectl (k3s)
-        ├── ci         → gh / glab si están; API pública (curl) para repos
-        │                públicos de GitHub; detección por archivos del repo
-        ├── argocd     → argocd CLI con sesión, o solo-lectura vía kubectl
-        └── status     → escribe ~/.cache/terminal-cockpit/state
+        ├── ci         → gh / glab when installed; public API (curl) for
+        │                public GitHub repos; detected from repo files
+        ├── argocd     → argocd CLI with a session, or read-only kubectl
+        └── status     → writes ~/.cache/terminal-cockpit/state
                             ▲
-  scripts/shell-hook.sh (bash): OSC 7 (cwd) + refresh del estado por prompt
+  scripts/shell-hook.sh (bash): OSC 7 (cwd) + per-prompt status refresh
 ```
 
-Principios:
+Principles:
 
-- **El shell sigue siendo el shell.** La paleta escribe comandos normales en el
-  pane (historial incluido). No hay app que reemplace nada.
-- **Nada cuelga.** Todo `kubectl`/`argocd`/`curl` lleva `timeout` y caché.
-  El status de WezTerm **solo lee un archivo** que escribe el shell: nunca
-  lanza procesos (el API caído no puede congelar la UI).
-- **Solo aparece lo que existe.** La paleta oculta secciones según detección
-  real: herramientas instaladas (`ck doctor`), repo actual y su proveedor,
-  CI del repo (`.github/workflows` / `.gitlab-ci.yml`), ArgoCD (CLI + sesión o
-  CRD en el clúster).
-- **Sin duplicar.** Git vive en Starship; la salud del clúster vive en el
-  status de WezTerm.
+- **The shell stays the shell.** The palette types plain commands into the
+  active pane (history included). Nothing is replaced by an app.
+- **Nothing hangs.** Every `kubectl`/`argocd`/`curl` call is wrapped in
+  `timeout` with caching. The WezTerm status bar only reads a file written
+  by the shell — it never spawns processes, so a down cluster can never
+  freeze the UI.
+- **Only what exists is shown.** Palette sections are gated on real
+  detection: installed tools (`ck doctor`), current repo and its provider,
+  repo CI config (`.github/workflows` / `.gitlab-ci.yml`), ArgoCD (CLI
+  session or in-cluster CRD).
+- **No duplication.** Git context lives in Starship; cluster health lives
+  in the WezTerm status bar.
 
-## Uso
+## Usage
 
-| Atajo | Acción |
+| Shortcut | Action |
 |---|---|
-| `LEADER+P` | paleta del cockpit (Git / Repo / K8s / Argo / CI) |
-| resto de atajos | sin cambios (tmux-style, LEADER+1..9, etc.) |
+| `LEADER` then `P` | cockpit palette (Git / Repo / K8s / Argo / CI) |
+| all other shortcuts | unchanged (tmux-style, LEADER+1..9, ...) |
 
-CLI directo (funciona igual sin WezTerm):
+Direct CLI (works without WezTerm too):
 
 ```
-ck doctor                     qué hay instalado en WSL
-ck status [--force]           estado k8s/argo (y lo pinta WezTerm)
+ck doctor                     what is installed in WSL
+ck status [--force]           k8s/argo state (also feeds WezTerm)
 ck git info | branches | url repo|pulls|ci
 ck k8s contexts|namespaces|pods|deployments|services|events [--names] [ns]
 ck ci detect|runs|failed|ids|view <id>|rerun <id>|page
 ck argocd detect|apps|names|get|sync|refresh|history|logs <app>
 ```
 
-## Instalación (por si se replica en otra máquina)
+## Install (to replicate on another machine)
 
-1. Symlinks de arriba (Windows: `New-Item -ItemType SymbolicLink`; WSL: `ln -s`).
-2. Al final de `~/.bashrc` (WSL Debian):
+1. The symlinks shown above (Windows: `New-Item -ItemType SymbolicLink`;
+   WSL: `ln -s`).
+2. At the end of `~/.bashrc` (WSL Debian):
    `source /mnt/c/dev/dotfiles/scripts/shell-hook.sh`
-3. Los scripts deben conservar **LF** (`.gitattributes` lo garantiza; en /mnt/c
-   el CRLF rompe bash).
+3. Scripts must keep **LF** endings (`.gitattributes` enforces this; on
+   /mnt/c, CRLF breaks bash).
 
-## Ficheros
+## Files
 
-- `wezterm/wezterm.lua` — config base + carga protegida (`pcall`) del cockpit.
-- `wezterm/cockpit/` — `init` (cableado), `config` (constantes), `wsl` (puente
-  WezTerm⇄WSL), `util` (send/selectores), `status`, `palette`,
-  `git|k8s|argocd|ci` (entradas de paleta).
+- `wezterm/wezterm.lua` — base config + guarded (`pcall`) cockpit loading.
+- `wezterm/cockpit/` — `init` (wiring), `config` (constants), `wsl`
+  (WezTerm⇄WSL bridge), `util` (send/pickers), `status`, `palette`,
+  `git|k8s|argocd|ci` (palette entries).
 - `scripts/` — `ck` (dispatcher) + `ck-git|ck-k8s|ck-ci|ck-argocd|ck-status`,
   `shell-hook.sh`, `lib/common.sh`.
-- `starship/starship.toml` — prompt (+ módulo `kubernetes`).
+- `starship/starship.toml` — prompt (+ `kubernetes` module).
+- `wezterm/fonts/` — JetBrainsMono Nerd Font, licensed under the SIL Open
+  Font License 1.1 (see `wezterm/fonts/OFL.txt`).
 
-## Notas de entorno verificadas
+## Verified environment notes
 
-- WezTerm `20240203`, WSL2 Debian (default domain), kubectl = binario de k3s.
-- `gh`, `glab` y `argocd` no están instalados: esas secciones se ocultan hasta
-  que existan (instala el CLI y la paleta las mostrará automáticamente).
-- Si el API de k3s está parado, el status muestra `☸ ctx · ns ●` en rojo y los
-  selectores de K8s avisan "sin resultados" en lugar de colgar.
+- WezTerm `20240203`, WSL2 Debian (default domain), kubectl = the k3s binary.
+- `gh`, `glab` and the `argocd` CLI are not installed: those palette
+  sections stay hidden until they exist (install the CLI and the palette
+  will pick them up automatically).
+- If the k3s API is down, the status bar shows `☸ ctx · ns` with a red dot
+  and the K8s pickers report "no results" instead of hanging.

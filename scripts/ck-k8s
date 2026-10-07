@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# ck-k8s — listados contextuales de Kubernetes (kubectl siempre con timeout).
-# El API de k3s puede estar caído: nada de aquí cuelga el terminal.
-# Subcomandos [--names = solo nombres, para los selectores de la paleta]:
+# ck-k8s — contextual Kubernetes listings (kubectl always with a timeout).
+# The k3s API may be down: nothing here hangs the terminal.
+# Subcommands [--names = names only, for palette pickers]:
 #   contexts | namespaces | pods [ns] | deployments [ns] | services [ns] | events [ns]
 set -u
 
@@ -9,7 +9,7 @@ CK_SRC_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 # shellcheck source=lib/common.sh
 source "$CK_SRC_DIR/lib/common.sh"
 
-ck_have kubectl || { echo "kubectl no está instalado en WSL" >&2; exit 1; }
+ck_have kubectl || { echo "kubectl is not installed in WSL" >&2; exit 1; }
 
 names=0
 args=()
@@ -19,10 +19,10 @@ for a in "$@"; do
     *) args+=("$a") ;;
   esac
 done
-# (bash >= 4.4: expandir un array vacío con "${args[@]}" es seguro)
+# (bash >= 4.4: expanding an empty array with "${args[@]}" is safe)
 [ ${#args[@]} -gt 0 ] && set -- "${args[@]}" || set --
 
-# namespace actual (offline, desde el kubeconfig)
+# current namespace (offline, from the kubeconfig)
 current_ns() {
   local ns
   ns="$(timeout 3 kubectl config view --minify -o jsonpath='{..namespace}' 2>/dev/null || true)"
@@ -30,7 +30,7 @@ current_ns() {
   printf '%s' "$ns"
 }
 
-list() { # list <recurso> [namespace] [--names]
+list() { # list <resource> [namespace] [names|table]
   local res="$1" ns="${2:-}" only="${3:-table}"
   [ -n "$ns" ] || ns="$(current_ns)"
   if [ "$only" = "names" ]; then
@@ -61,7 +61,7 @@ case "$sub" in
     ck_k8s_run get events -n "$ns" --sort-by=.lastTimestamp
     ;;
   *)
-    echo "uso: ck k8s contexts|namespaces|pods|deployments|services|events [--names] [ns]" >&2
+    echo "usage: ck k8s contexts|namespaces|pods|deployments|services|events [--names] [ns]" >&2
     exit 2
     ;;
 esac

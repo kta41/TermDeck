@@ -1,6 +1,6 @@
--- k8s.lua — entradas de la paleta para Kubernetes/K3s (kubectl puro).
--- Los comandos se escriben en el pane: historial y comportamiento normales.
--- Los selectores usan listas con timeout (si el API está caído avisan, no cuelgan).
+-- k8s.lua — palette entries for Kubernetes/K3s (plain kubectl).
+-- Commands are typed into the pane: normal history and behaviour.
+-- Pickers use timeout-guarded lists (a down API warns, it never hangs).
 local util = require 'cockpit.util'
 
 local M = {}
@@ -29,10 +29,10 @@ function M.build(add, ctx)
   end)
   add('K8s: port-forward (pod)', function(w, p)
     util.pick(w, p, {
-      title = 'Pod → port-forward (edita puertos antes de Enter)',
+      title = 'Pod → port-forward (edit ports before pressing Enter)',
       ck_args = 'k8s pods --names',
       template = 'kubectl port-forward pod/%s 8080:80',
-      enter = false, -- editable: ajusta los puertos antes de ejecutar
+      enter = false, -- editable: adjust ports before running
       cwd = cwd,
     })
   end)
@@ -50,18 +50,18 @@ function M.build(add, ctx)
     util.send(w, p, 'kubectl get events --sort-by=.lastTimestamp')
   end)
   add('K8s: namespaces', function(w, p) util.send(w, p, 'kubectl get ns') end)
-  add('K8s: namespace → cambiar', function(w, p)
+  add('K8s: namespace → switch', function(w, p)
     util.pick(w, p, {
-      title = 'Cambiar namespace del contexto actual',
+      title = 'Set namespace of the current context',
       ck_args = 'k8s namespaces --names',
       template = 'kubectl config set-context --current --namespace=%s',
       cwd = cwd,
     })
   end)
   add('K8s: contexts', function(w, p) util.send(w, p, 'kubectl config get-contexts') end)
-  add('K8s: context → cambiar', function(w, p)
+  add('K8s: context → switch', function(w, p)
     util.pick(w, p, {
-      title = 'Cambiar de contexto',
+      title = 'Switch context',
       ck_args = 'k8s contexts --names',
       template = 'kubectl config use-context %s',
       cwd = cwd,

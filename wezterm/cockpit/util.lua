@@ -1,5 +1,5 @@
--- util.lua — helpers de UI de la capa WezTerm: enviar comandos al pane,
--- selectores encadenados (InputSelector) y avisos (toasts).
+-- util.lua — UI helpers for the WezTerm layer: send commands to the pane,
+-- chained pickers (InputSelector) and notifications (toasts).
 local wezterm = require 'wezterm'
 local act = wezterm.action
 local wsl = require 'cockpit.wsl'
@@ -10,8 +10,8 @@ function M.toast(window, msg)
   window:toast_notification('cockpit', msg, nil, 3000)
 end
 
--- Envía texto al pane activo, por defecto con Enter al final.
--- enter = false para dejar el comando editable (p.ej. port-forward).
+-- Sends text to the active pane, with Enter by default.
+-- enter = false leaves the command editable (e.g. port-forward).
 function M.send(window, pane, text, enter)
   local s = text
   if enter ~= false then
@@ -20,24 +20,24 @@ function M.send(window, pane, text, enter)
   window:perform_action(act.SendString { string = s }, pane)
 end
 
--- Abre una URL con el navegador por defecto de Windows.
+-- Opens a URL with the Windows default browser.
 function M.open_url(window, url)
   if not url or url == '' then
-    M.toast(window, 'sin URL (¿remote sin proveedor reconocido?)')
+    M.toast(window, 'no URL (unrecognized remote provider?)')
     return
   end
   wezterm.open_with(url)
 end
 
--- Selector encadenado: ejecuta un subcomando de ck en WSL, muestra un
--- InputSelector difuso y envía template con lo elegido.
+-- Chained picker: runs a ck subcommand inside WSL, shows a fuzzy
+-- InputSelector and sends template with the selection.
 -- p = { title, ck_args, template, field, enter, cwd }
---   field   patrón Lua para extraer la parte que se sustituye ('^(%S+)')
---   enter   false → sin Enter (editable)
+--   field   Lua pattern to extract the substituted part ('^(%S+)')
+--   enter   false → no Enter (editable)
 function M.pick(window, pane, p)
   local out = wsl.ck(p.ck_args, { cwd = p.cwd })
   if not out then
-    M.toast(window, p.title .. ': WSL no disponible')
+    M.toast(window, p.title .. ': WSL unavailable')
     return
   end
   local entries = {}
@@ -47,13 +47,13 @@ function M.pick(window, pane, p)
     end
   end
   if #entries == 0 then
-    M.toast(window, p.title .. ': sin resultados o no disponible')
+    M.toast(window, p.title .. ': no results or unavailable')
     return
   end
   window:perform_action(
     act.InputSelector {
       title = p.title,
-      description = 'Enter para elegir · Esc para cancelar',
+      description = 'Enter to select · Esc to cancel',
       fuzzy = true,
       entries = entries,
       action = wezterm.action_callback(function(w2, p2, _, sel)

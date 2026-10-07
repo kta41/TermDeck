@@ -1,18 +1,18 @@
--- wsl.lua — puente WezTerm (Windows) ⇄ WSL Debian:
---   * ejecutar comandos dentro de WSL (listados para selectores, detección)
---   * leer el archivo de estado que escribe `ck status` (barato: sin procesos)
+-- wsl.lua — WezTerm (Windows) ⇄ WSL Debian bridge:
+--   * run commands inside WSL (pickers, detection)
+--   * read the state file written by `ck status` (cheap: no processes)
 local wezterm = require 'wezterm'
 local cfg = require 'cockpit.config'
 
 local M = {}
 
--- Ruta UNC de Windows hacia el archivo de estado del usuario en WSL.
+-- Windows UNC path to the user's state file inside WSL.
 function M.state_path()
   return '\\\\wsl.localhost\\' .. cfg.distro .. '\\home\\' .. cfg.wsl_user .. '\\'
     .. (cfg.state_rel_path:gsub('/', '\\'))
 end
 
--- Lee el estado key=value escrito por ck-status. Devuelve tabla (vacía si error).
+-- Reads the key=value state written by ck-status. Returns a table (empty on error).
 function M.read_state()
   local ok, res = pcall(function()
     local f = io.open(M.state_path(), 'r')
@@ -35,8 +35,8 @@ function M.read_state()
   return {}
 end
 
--- Ejecuta cmd con bash de login dentro de WSL. opts.cwd = ruta Linux inicial.
--- Devuelve stdout o nil. Los comandos que tocan la red deben llevar `timeout`.
+-- Runs cmd with a login bash inside WSL. opts.cwd = initial Linux path.
+-- Returns stdout or nil. Network-touching commands must carry `timeout`.
 function M.run(cmd, opts)
   opts = opts or {}
   local args = { 'wsl.exe', '-d', cfg.distro }
@@ -55,7 +55,7 @@ function M.run(cmd, opts)
   return nil
 end
 
--- Igual que run() pero devuelve la lista de líneas no vacías (o nil).
+-- Same as run() but returns the list of non-empty lines (or nil).
 function M.lines(cmd, opts)
   local out = M.run(cmd, opts)
   if not out then
@@ -68,8 +68,8 @@ function M.lines(cmd, opts)
   return res
 end
 
--- Ejecuta un subcomando del dispatcher ck usando ruta absoluta (en shells no
--- interactivos ~/.local/bin puede no estar en PATH). args = 'k8s pods --names'
+-- Runs a ck subcommand using an absolute path (non-interactive shells may not
+-- have ~/.local/bin on PATH). args = 'k8s pods --names'
 function M.ck(args, opts)
   local cmd = 'CK="$HOME/.local/bin/ck"; '
     .. '[ -x "$CK" ] || CK="$(command -v ck 2>/dev/null)"; '
@@ -77,7 +77,7 @@ function M.ck(args, opts)
   return M.run(cmd, opts)
 end
 
--- ¿El pane actual pertenece al dominio WSL del cockpit?
+-- Does the current pane belong to the cockpit's WSL domain?
 function M.pane_is_wsl(pane)
   local ok, name = pcall(function()
     return pane:get_domain_name()
@@ -85,7 +85,7 @@ function M.pane_is_wsl(pane)
   return ok and name == 'WSL:' .. cfg.distro
 end
 
--- cwd del pane según OSC 7 (lo emite scripts/shell-hook.sh) → '/home/...' | nil
+-- Pane cwd from OSC 7 (emitted by scripts/shell-hook.sh) → '/home/...' | nil
 function M.pane_cwd(pane)
   local ok, url = pcall(function()
     return pane:get_current_working_dir()

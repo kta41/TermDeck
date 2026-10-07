@@ -1,6 +1,6 @@
--- status.lua — barra derecha: ☸ contexto·namespace + estado del API + argo.
--- Solo LEE el archivo de estado que escribe `ck status` desde el shell hook:
--- nunca lanza procesos desde aquí (el API caído no puede congelar la UI).
+-- status.lua — right status bar: ☸ context·namespace + API state + argo.
+-- It only READS the state file written by `ck status` from the shell hook:
+-- no processes are ever spawned here (a down API cannot freeze the UI).
 local wezterm = require 'wezterm'
 local cfg = require 'cockpit.config'
 local wsl = require 'cockpit.wsl'
@@ -27,7 +27,7 @@ function M.update(window, pane)
     local updated = tonumber(s.updated or '') or 0
     local segs = {}
     if updated == 0 or (os.time() - updated) > cfg.state_max_age then
-      add(segs, C.dim, ' cockpit · sin datos ')
+      add(segs, C.dim, ' cockpit · no data ')
     elseif s.k8s_state and s.k8s_state ~= 'none' then
       add(segs, C.blue, '☸ ' .. ((s.k8s_context ~= '' and s.k8s_context) or '?'))
       if s.k8s_namespace and s.k8s_namespace ~= '' then

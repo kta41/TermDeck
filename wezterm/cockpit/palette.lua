@@ -1,6 +1,6 @@
--- palette.lua — paleta de acciones del cockpit (LEADER+P).
--- Regla de oro: solo se listan operaciones implementadas Y disponibles ahora
--- mismo (herramientas instaladas, repo actual, proveedor del remote, clúster).
+-- palette.lua — cockpit action palette (LEADER+P).
+-- Golden rule: only implemented AND currently available operations are
+-- listed (installed tools, current repo, remote provider, cluster).
 local wezterm = require 'wezterm'
 local act = wezterm.action
 local cfg = require 'cockpit.config'
@@ -13,7 +13,7 @@ local cimod = require 'cockpit.ci'
 
 local M = {}
 
--- capacidades de herramientas (`ck doctor -q`), cacheadas cfg.caps_ttl s
+-- tool capabilities (`ck doctor -q`), cached for cfg.caps_ttl seconds
 local caps_cache, caps_time = nil, 0
 local function caps()
   if caps_cache and (os.time() - caps_time) < cfg.caps_ttl then
@@ -30,7 +30,7 @@ end
 
 function M.open(window, pane)
   if not wsl.pane_is_wsl(pane) then
-    util.toast(window, 'cockpit: usa la paleta en un pane de WSL (' .. cfg.distro .. ')')
+    util.toast(window, 'cockpit: open the palette in a WSL (' .. cfg.distro .. ') pane')
     return
   end
 
@@ -38,7 +38,7 @@ function M.open(window, pane)
   local c = caps()
   local state = wsl.read_state()
 
-  -- contexto del repo actual (detección local: archivos + remote, sin red)
+  -- current repo context (local detection: files + remote, no network)
   local provider, repo_url = 'none', ''
   local in_repo = false
   if c.git then
@@ -49,7 +49,7 @@ function M.open(window, pane)
     in_repo = isrepo:find 'true' ~= nil
   end
 
-  -- CI del repo actual (vacío → la sección no aparece)
+  -- CI of the current repo (empty → the section stays hidden)
   local ci = {}
   if in_repo then
     local cout = wsl.ck('ci detect -q') or ''
@@ -76,9 +76,9 @@ function M.open(window, pane)
     actions[tostring(#actions + 1)] = fn
   end
 
-  add('Cockpit: refrescar estado', function(w, p)
+  add('Cockpit: refresh status', function(w, p)
     wsl.ck('status --force')
-    util.toast(w, 'estado refrescado')
+    util.toast(w, 'status refreshed')
   end)
 
   if in_repo and c.git then
@@ -95,7 +95,7 @@ function M.open(window, pane)
   window:perform_action(
     act.InputSelector {
       title = 'Cockpit',
-      description = 'escribe para filtrar (difuso) · Esc cancela',
+      description = 'type to filter (fuzzy) · Esc cancels',
       fuzzy = true,
       entries = entries,
       action = wezterm.action_callback(function(w2, p2, _, id)

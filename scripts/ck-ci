@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# ck-ci — CI/CD contextual. Detección por repo (archivos + remote), sin asumir
-# plataforma: GitHub Actions / GitLab CI, vía gh / glab si están instalados,
-# o vía API pública con curl (solo lectura, repos públicos de GitHub).
-# Subcomandos: detect [-q] | runs | failed | ids | view <id> | rerun <id> | page
+# ck-ci — contextual CI/CD. Detection is per repo (files + remote); no
+# platform is assumed: GitHub Actions / GitLab CI, via gh / glab when
+# installed, or via the public API with curl (read-only, public GitHub repos).
+# Subcommands: detect [-q] | runs | failed | ids | view <id> | rerun <id> | page
 set -u
 
 CK_SRC_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 # shellcheck source=lib/common.sh
 source "$CK_SRC_DIR/lib/common.sh"
 
-ck_git_root >/dev/null || { echo "no estás dentro de un repositorio git" >&2; exit 1; }
+ck_git_root >/dev/null || { echo "not inside a git repository" >&2; exit 1; }
 
-detect() { # imprime provider= ci= cli= repo=owner/name
+detect() { # prints provider= ci= cli= repo=owner/name
   local root prov cli ci repo
   root="$(ck_git_root)"
   prov="$(ck_git_provider || true)"
@@ -30,17 +30,17 @@ detect() { # imprime provider= ci= cli= repo=owner/name
   echo "provider=${prov:-none} ci=$ci cli=$cli repo=$repo"
 }
 
-ci_env() { # carga PROVIDER/CI/CLI/REPO desde detect
+ci_env() { # loads PROVIDER/CI_SYS/CLI/REPO from detect
   eval "$(detect | tr ' ' '\n' | sed 's/^/D_/')"
   PROVIDER="${D_provider}"; CI_SYS="${D_ci}"; CLI="${D_cli}"; REPO="${D_repo}"
   [ -n "$PROVIDER" ] || PROVIDER=none
 }
 
 need_ci() {
-  [ "$CI_SYS" != "none" ] || { echo "no se detectó CI en este repositorio (.github/workflows o .gitlab-ci.yml)" >&2; exit 1; }
+  [ "$CI_SYS" != "none" ] || { echo "no CI detected in this repository (.github/workflows or .gitlab-ci.yml)" >&2; exit 1; }
 }
 
-ck_gh_public() { # ck_gh_public <path> <jq-expr>  (API pública, solo repos públicos)
+ck_gh_public() { # ck_gh_public <path> <jq-expr>  (public API, public repos only)
   local repo; repo="$(ck_git_https | sed 's|.*://[^/]*/||')"
   curl -sf --max-time 8 "https://api.github.com/repos/$repo$1" | jq -r "$2"
 }
@@ -52,8 +52,8 @@ case "$sub" in
   detect)
     quiet=0; [ "${1:-}" = "-q" ] && quiet=1
     if [ "$quiet" -eq 1 ]; then detect; else
-      out="$(detect)"; echo "$out" | tr ' ' '\n' | sed 's/=/: /'
-      [ "$CLI" != "none" ] || echo "nota: sin CLI ($([ "$PROVIDER" = github ] && echo gh || echo glab)) solo hay lectura limitada"
+      out="$(detect)"; echo "$out" | tr ' ' '\n' | sed 's/=/ /;s/^/  /'
+      [ "$CLI" != "none" ] || echo "  note: without the CLI ($([ "$PROVIDER" = github ] && echo gh || echo glab)) only limited read access is available"
     fi
     ;;
   runs)
@@ -63,7 +63,7 @@ case "$sub" in
       glab:gitlab)   exec glab ci list -P 15 ;;
       *:actions)     ck_gh_public '/actions/runs?per_page=15' \
                        '.workflow_runs[] | "\(.id)  \(.conclusion // .status)  \(.name)  \(.head_branch // "-")"' ;;
-      *) echo "listado no disponible sin glab (repo privado o CLI ausente)" >&2; exit 1 ;;
+      *) echo "listing unavailable without glab (private repo or missing CLI)" >&2; exit 1 ;;
     esac
     ;;
   failed)
@@ -73,10 +73,10 @@ case "$sub" in
       glab:gitlab)   exec glab ci list --status failed -P 15 ;;
       *:actions)     ck_gh_public '/actions/runs?per_page=15&status=failure' \
                        '.workflow_runs[] | "\(.id)  \(.name)  \(.head_branch // "-")"' ;;
-      *) echo "no disponible sin glab" >&2; exit 1 ;;
+      *) echo "unavailable without glab" >&2; exit 1 ;;
     esac
     ;;
-  ids) # solo IDs, para los selectores de la paleta
+  ids) # IDs only, for palette pickers
     need_ci
     case "$CLI:$CI_SYS" in
       gh:actions)    gh run list --limit 15 --json databaseId -q '.[].databaseId' ;;
@@ -86,26 +86,26 @@ case "$sub" in
     esac
     ;;
   view)
-    need_ci; id="${1:?falta el id del run}"
+    need_ci; id="${1:?missing run id}"
     case "$CLI:$CI_SYS" in
       gh:actions)    exec gh run view "$id" --log ;;
       glab:gitlab)   exec glab ci trace "$id" ;;
-      *) echo "los logs requieren gh (API privada)" >&2; exit 1 ;;
+      *) echo "logs require gh (private API)" >&2; exit 1 ;;
     esac
     ;;
   rerun)
-    need_ci; id="${1:?falta el id del run}"
+    need_ci; id="${1:?missing run id}"
     case "$CLI:$CI_SYS" in
       gh:actions)    exec gh run rerun "$id" ;;
       glab:gitlab)   exec glab ci retry "$id" ;;
-      *) echo "reintentar requiere gh/glab autenticado" >&2; exit 1 ;;
+      *) echo "retrying requires an authenticated gh/glab" >&2; exit 1 ;;
     esac
     ;;
-  page) # URL web de pipelines/runs
+  page) # web URL for pipelines/runs
     exec "$CK_SRC_DIR/ck-git" url ci
     ;;
   *)
-    echo "uso: ck ci detect|runs|failed|ids|view <id>|rerun <id>|page" >&2
+    echo "usage: ck ci detect|runs|failed|ids|view <id>|rerun <id>|page" >&2
     exit 2
     ;;
 esac

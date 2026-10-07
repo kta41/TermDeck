@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# ck-git — contexto git del directorio actual.
-# Subcomandos: info | branches | provider [-q] | url repo|pulls|ci
+# ck-git — git context for the current directory.
+# Subcommands: info | branches | provider [-q] | url repo|pulls|ci
 set -u
 
 CK_SRC_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
@@ -9,12 +9,12 @@ source "$CK_SRC_DIR/lib/common.sh"
 
 sub="${1:-info}"; shift || true
 
-ck_git_root >/dev/null || { echo "no estás dentro de un repositorio git" >&2; exit 1; }
+ck_git_root >/dev/null || { echo "not inside a git repository" >&2; exit 1; }
 
 case "$sub" in
   info)
     branch="$(git branch --show-current)"
-    # rev-list --count separa las dos cifras con un TAB
+    # rev-list --count separates both numbers with a TAB
     counts="$(git rev-list --left-right --count '@{upstream}...HEAD' 2>/dev/null || printf '0\t0')"
     counts="${counts//$'\t'/ }"
     behind="${counts%% *}"; ahead="${counts##* }"
@@ -24,9 +24,9 @@ case "$sub" in
     printf '%s' "$CK_C_0"
     printf ' ↑%s ↓%s' "$ahead" "$behind"
     if [ "$dirty" -gt 0 ]; then
-      printf ' %s*%s cambios%s' "$CK_C_Y" "$dirty" "$CK_C_0"
+      printf ' %s*%s changed%s' "$CK_C_Y" "$dirty" "$CK_C_0"
     else
-      printf ' %slimpio%s' "$CK_C_G" "$CK_C_0"
+      printf ' %sclean%s' "$CK_C_G" "$CK_C_0"
     fi
     prov="$(ck_git_provider || true)"
     [ -n "$prov" ] && printf ' · %s' "$prov"
@@ -38,7 +38,10 @@ case "$sub" in
   provider)
     quiet=0; [ "${1:-}" = "-q" ] && quiet=1
     prov="$(ck_git_provider || true)"
-    [ "$quiet" -eq 1 ] || { [ -n "$prov" ] || prov="desconocido"; echo "proveedor: $prov"; }
+    if [ "$quiet" -eq 0 ]; then
+      [ -n "$prov" ] || prov="unknown"
+      echo "provider: $prov"
+    fi
     if [ -n "$prov" ]; then
       url="$(ck_git_https)"
       [ "$quiet" -eq 1 ] && echo "provider=$prov url=$url"
@@ -49,7 +52,7 @@ case "$sub" in
     ;;
   url)
     what="${1:-repo}"
-    base="$(ck_git_https)" || { echo "remote no reconocido" >&2; exit 1; }
+    base="$(ck_git_https)" || { echo "unrecognized remote" >&2; exit 1; }
     prov="$(ck_git_provider || true)"
     case "$prov:$what" in
       github:repo)  echo "$base" ;;
@@ -59,13 +62,13 @@ case "$sub" in
       gitlab:pulls) echo "$base/-/merge_requests" ;;
       gitlab:ci)    echo "$base/-/pipelines" ;;
       *)
-        echo "no sé construir la URL '$what' para el proveedor '${prov:-?}'" >&2
+        echo "cannot build URL '$what' for provider '${prov:-?}'" >&2
         exit 1
         ;;
     esac
     ;;
   *)
-    echo "uso: ck git info|branches|provider [-q]|url repo|pulls|ci" >&2
+    echo "usage: ck git info|branches|provider [-q]|url repo|pulls|ci" >&2
     exit 2
     ;;
 esac

@@ -1,5 +1,5 @@
-# Normalización: los scripts del cockpit viven en /mnt/c y se ejecutan en WSL,
-# por lo que DEBEN usar LF (CRLF rompe bash). El resto se normaliza al commit.
+# Normalization: cockpit scripts live on /mnt/c but run inside WSL,
+# so they MUST use LF (CRLF breaks bash). Everything else is normalized on commit.
 * text=auto
 scripts/** text eol=lf
 *.lua text eol=lf

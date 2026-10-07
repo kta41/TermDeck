@@ -1,11 +1,11 @@
-# shell-hook.sh — integración del cockpit en bash.
-# Añade al final de ~/.bashrc (WSL Debian):
+# shell-hook.sh — cockpit integration into bash.
+# Add at the end of ~/.bashrc (WSL Debian):
 #   source /mnt/c/dev/dotfiles/scripts/shell-hook.sh
-# Hace dos cosas ligeras tras cada prompt:
-#   1) OSC 7: informa a WezTerm del cwd actual (habilita la paleta contextual)
-#   2) refresca el estado del cockpit en background (con throttle interno)
+# Does two cheap things after every prompt:
+#   1) OSC 7: tells WezTerm the current cwd (enables the contextual palette)
+#   2) refreshes cockpit state in the background (throttled internally)
 
-# solo en shells interactivos
+# interactive shells only
 case $- in *i*) ;; *) return 0 2>/dev/null || exit 0 ;; esac
 
 __ck_hook() {

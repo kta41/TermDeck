@@ -12,17 +12,17 @@ format = """
  $username\
  $character"""
 
-# Línea en blanco entre prompts, respira mejor
+# Blank line between prompts, breathes better
 add_newline = true
 
 [directory]
-# Muestra máximo 3 niveles: ~/dev/dotfiles en vez de ruta completa
+# Show at most 3 levels: ~/dev/dotfiles instead of the full path
 truncation_length = 3
 
 [git_branch]
 symbol = " "
 
-# Ramas con cambios pendientes
+# Branches with pending changes
 [git_status]
 ahead = "⇡${count}"
 behind = "⇣${count}"
@@ -30,26 +30,26 @@ diverged = "⇕⇡${ahead_count}⇣${behind_count}"
 modified = "[*${count}](yellow)"
 
 [cmd_duration]
-# Muestra cuánto tardó el comando si pasó de 2s
+# Show how long the command took when over 2s
 min_time = 2000
 
 [time]
 disabled = false
 format = '\[[$time]($style)\] '
 time_format = '%H:%M'
-style = "#9399b2"   # gris sutil Catppuccin
+style = "#9399b2"   # subtle Catppuccin grey
 
 [username]
-show_always = true          # por defecto solo se muestra en SSH/root
-style_user = "bold #89b4fa" # azul Catppuccin; pon el que quieras
+show_always = true          # by default only shown on SSH/root
+style_user = "bold #89b4fa" # Catppuccin blue; pick your own
 format = "[$user ]($style)"
 
 [character]
 success_symbol = "[>](bold green)"
 error_symbol = "[>](bold red)"
 
-# Contexto k8s actual: lee el kubeconfig, sin llamadas al API → rápido y seguro.
-# Solo contexto/namespace; la salud del clúster la pinta WezTerm (status derecho).
+# Current k8s context: reads the kubeconfig only, no API calls → fast and safe.
+# Context/namespace only; cluster health is rendered by WezTerm (right status).
 [kubernetes]
 disabled = false
 symbol = "☸ "

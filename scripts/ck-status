@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# ck-status — refresca el estado del cockpit (contexto k8s, API, ArgoCD) y lo
-# escribe en ~/.cache/terminal-cockpit/state para que WezTerm lo pinte sin
-# spawnar ningún proceso (evita cuelgues si el API está caído).
-# Uso: ck-status [--force] [--quiet]
+# ck-status — refreshes cockpit state (k8s context, API, ArgoCD) and writes it
+# to ~/.cache/terminal-cockpit/state so WezTerm can render it without
+# spawning any process (avoids hangs when the API is down).
+# Usage: ck-status [--force] [--quiet]
 set -u
 
 CK_SRC_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
@@ -17,27 +17,27 @@ for a in "$@"; do
   esac
 done
 
-# --- throttle global: como mucho una vez cada 30 s (salvo --force) ---
+# --- global throttle: at most once every 30 s (unless --force) ---
 if [ "$force" -eq 0 ] && ! ck_throttled status_checked 30; then
   exit 0
 fi
 ck_state_set status_checked "$(ck_now)"
 
-# --- contexto y namespace (offline: solo lee el kubeconfig) ---
+# --- context and namespace (offline: kubeconfig only) ---
 ctx="" ns=""
 if ck_have kubectl; then
   ctx="$(timeout 3 kubectl config current-context 2>/dev/null || true)"
   ns="$(timeout 3 kubectl config view --minify -o jsonpath='{..namespace}' 2>/dev/null || true)"
 fi
 if [ -z "$ctx" ] && [ -r "${KUBECONFIG:-$HOME/.kube/config}" ]; then
-  # fallback barato si el kubectl de k3s tarda en arrancar
+  # cheap fallback when the k3s kubectl is slow to start
   ctx="$(sed -n 's/^current-context:[[:space:]]*//p' "${KUBECONFIG:-$HOME/.kube/config}" | head -1)"
 fi
 [ -z "$ns" ] && ns="default"
 ck_state_set k8s_context "$ctx"
 ck_state_set k8s_namespace "$ns"
 
-# --- reachability del API (con su propio throttle) ---
+# --- API reachability (own throttle) ---
 if ! ck_have kubectl; then
   ck_state_set k8s_state none
 else
@@ -48,7 +48,7 @@ else
     else
       ck_state_set k8s_state down
     fi
-    # ¿Hay ArgoCD instalado en el clúster? (CRD de aplicaciones)
+    # Is ArgoCD installed in the cluster? (applications CRD)
     if [ "$(ck_state_get k8s_state)" = "ok" ]; then
       if ck_kubectl get crd applications.argoproj.io >/dev/null 2>&1; then
         ck_state_set argocd_kube 1
@@ -59,7 +59,7 @@ else
   fi
 fi
 
-# --- ArgoCD CLI (con su propio throttle) ---
+# --- ArgoCD CLI (own throttle) ---
 if [ "$force" -eq 1 ] || ck_throttled argo_checked "$CK_ARGO_EVERY"; then
   ck_state_set argo_checked "$(ck_now)"
   if ! ck_have argocd; then
@@ -73,7 +73,7 @@ fi
 
 ck_state_set updated "$(ck_now)"
 
-# --- salida humana ---
+# --- human output ---
 if [ "$quiet" -ne 1 ]; then
   st="$(ck_state_get k8s_state)"
   case "$st" in
@@ -81,8 +81,8 @@ if [ "$quiet" -ne 1 ]; then
     down) st="${CK_C_R}down${CK_C_0}" ;;
     *)    st="${CK_C_Y}${st}${CK_C_0}" ;;
   esac
-  echo "k8s  contexto: ${CK_C_B}${ctx}${CK_C_0} · ns: ${CK_C_B}${ns}${CK_C_0} · API: ${st}"
+  echo "k8s  context: ${CK_C_B}${ctx}${CK_C_0} · ns: ${CK_C_B}${ns}${CK_C_0} · API: ${st}"
   ar="$(ck_state_get argocd)"; ark="$(ck_state_get argocd_kube)"
-  echo "argo CLI: ${ar:-?} · en clúster: ${ark:-?}"
-  echo "estado → $CK_STATE_FILE"
+  echo "argo CLI: ${ar:-?} · in cluster: ${ark:-?}"
+  echo "state → $CK_STATE_FILE"
 fi

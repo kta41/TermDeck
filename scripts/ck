@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# ck — dispatcher del terminal cockpit (git / k8s / ci / argocd / status / doctor)
-# Los módulos también funcionan solos: ck-git, ck-k8s, ck-ci, ck-argocd, ck-status
-# Uso: ck <grupo> <subcomando> [args...]   |   ck help
+# ck — terminal cockpit dispatcher (git / k8s / ci / argocd / status / doctor)
+# Each module also works standalone: ck-git, ck-k8s, ck-ci, ck-argocd, ck-status
+# Usage: ck <group> <subcommand> [args...]   |   ck help
 set -u
 
 CK_SRC_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
@@ -24,12 +24,12 @@ case "$cmd" in
       done
       echo
     else
-      echo "entorno del cockpit (WSL):"
+      echo "cockpit environment (WSL):"
       for t in git kubectl k3s gh glab argocd jq curl; do
         if ck_have "$t"; then
           printf '  %-8s %s✓%s %s\n' "$t" "$CK_C_G" "$CK_C_0" "$(command -v "$t")"
         else
-          printf '  %-8s %s✗%s no instalado\n' "$t" "$CK_C_R" "$CK_C_0"
+          printf '  %-8s %s✗%s not installed\n' "$t" "$CK_C_R" "$CK_C_0"
         fi
       done
     fi
@@ -38,15 +38,15 @@ case "$cmd" in
     cat <<'EOF'
 ck — terminal cockpit (WezTerm + Starship)
 
-  ck git info                  repositorio, rama, delante/detrás, sucio
-  ck git branches              ramas locales (para selectores)
-  ck git url repo|pulls|ci     URL web según el proveedor del remote
-  ck git provider              proveedor detectado (github/gitlab)
+  ck git info                  repository, branch, ahead/behind, dirty
+  ck git branches              local branches (for pickers)
+  ck git url repo|pulls|ci     web URL based on the remote provider
+  ck git provider              detected provider (github/gitlab)
   ck k8s contexts|namespaces|pods|deployments|services|events [--names] [ns]
   ck ci detect [-q]|runs|failed|view <id>|rerun <id>|page
   ck argocd detect [-q]|apps|names|get|sync|refresh|history|logs <app>
-  ck status [--force] [--quiet]  refresca el estado que pinta WezTerm
-  ck doctor [-q]                herramientas detectadas
+  ck status [--force] [--quiet]  refresh the state rendered by WezTerm
+  ck doctor [-q]                detected tools
 EOF
     ;;
 esac

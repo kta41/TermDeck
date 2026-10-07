@@ -1,7 +1,7 @@
--- argocd.lua — entradas de la paleta para ArgoCD según lo realmente disponible:
---   * estado 'ready' (CLI instalado + sesión válida) → operaciones completas
---   * sin CLI pero CRD en el clúster (argocd_kube=1) → solo lectura vía kubectl
---   * nada → no aparece en la paleta
+-- argocd.lua — palette entries for ArgoCD based on what is actually available:
+--   * state 'ready' (CLI installed + valid session) → full operations
+--   * no CLI but applications CRD in-cluster (argocd_kube=1) → kubectl read-only
+--   * nothing → not shown in the palette
 local util = require 'cockpit.util'
 
 local M = {}
@@ -12,8 +12,8 @@ function M.build(add, ctx)
   local cwd = ctx.cwd
 
   if ar == 'ready' then
-    add('Argo: aplicaciones', function(w, p) util.send(w, p, 'argocd app list') end)
-    add('Argo: app → detalle', function(w, p)
+    add('Argo: applications', function(w, p) util.send(w, p, 'argocd app list') end)
+    add('Argo: app → get', function(w, p)
       util.pick(w, p, {
         title = 'App → get',
         ck_args = 'argocd names',
@@ -54,7 +54,7 @@ function M.build(add, ctx)
       })
     end)
   elseif ar == 'absent' and kube_fallback then
-    add('Argo: aplicaciones (solo lectura, kubectl)', function(w, p)
+    add('Argo: applications (read-only, kubectl)', function(w, p)
       util.send(w, p, 'kubectl get applications.argoproj.io -A')
     end)
   end

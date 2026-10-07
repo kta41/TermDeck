@@ -1,4 +1,4 @@
--- git.lua — entradas de la paleta para Git (siempre git puro y simple).
+-- git.lua — palette entries for Git (plain git, nothing fancy).
 local util = require 'cockpit.util'
 
 local M = {}
@@ -16,20 +16,20 @@ function M.build(add, ctx)
   add('Git: stash pop', function(w, p) util.send(w, p, 'git stash pop') end)
   add('Git: branch → switch', function(w, p)
     util.pick(w, p, {
-      title = 'Cambiar de rama',
+      title = 'Switch branch',
       ck_args = 'git branches',
       template = 'git switch %s',
       cwd = cwd,
     })
   end)
 
-  -- páginas web del proveedor detectado en el remote (github / gitlab)
+  -- provider web pages detected from the remote (github / gitlab)
   if ctx.provider == 'github' or ctx.provider == 'gitlab' then
     local pulls = ctx.provider == 'github' and '/pulls' or '/-/merge_requests'
-    add('Repo: abrir en el navegador', function(w, p)
+    add('Repo: open in browser', function(w, p)
       util.open_url(w, ctx.repo_url)
     end)
-    add('Repo: abrir PRs / MRs', function(w, p)
+    add('Repo: open PRs / MRs', function(w, p)
       util.open_url(w, ctx.repo_url .. pulls)
     end)
   end
