@@ -21,7 +21,10 @@ function M.read_state()
     end
     local t = {}
     for line in f:lines() do
-      local k, v = line:match '^(%w+)=(.*)$'
+      -- NOTE: %w in Lua does NOT include '_' (unlike regex \w) — keys such as
+      -- k8s_state or api_checked need the explicit [%w_] class or they are
+      -- silently skipped.
+      local k, v = line:match '^([%w_]+)=(.*)$'
       if k then
         t[k] = v
       end
