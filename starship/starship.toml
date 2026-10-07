@@ -1,0 +1,36 @@
+format = """
+ $directory\
+ $git_branch\
+ $git_status\
+ $python\
+ $nodejs\
+ $rust\
+ $cmd_duration\
+ $line_break\
+ $character"""
+
+# Línea en blanco entre prompts, respira mejor
+add_newline = true
+
+[directory]
+# Muestra máximo 3 niveles: ~/dev/dotfiles en vez de ruta completa
+truncation_length = 3
+
+[git_branch]
+symbol = " "
+
+# Ramas con cambios pendientes
+[git_status]
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+modified = "[*${count}](yellow)"
+
+[cmd_duration]
+# Muestra cuánto tardó el comando si pasó de 2s
+min_time = 2000
+
+# El prompt en sí: verde si el último comando fue OK, rojo si falló
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
