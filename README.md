@@ -1,4 +1,4 @@
-# dotfiles — terminal cockpit (WezTerm + Starship)
+# TermDeck — terminal cockpit (WezTerm + Starship)
 
 A **live** configuration repository: configs are consumed through symlinks,
 never copied.

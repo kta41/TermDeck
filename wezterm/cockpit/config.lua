@@ -5,7 +5,11 @@ local M = {
   wsl_user = 'Kta41',                   -- $USER inside WSL (UNC path for state)
   state_rel_path = '.cache/terminal-cockpit/state', -- written by `ck status`
   caps_ttl = 30,                        -- seconds `ck doctor` is cached in the palette
-  state_max_age = 300,                  -- seconds before status is considered stale
+  -- Staleness window for the right status. Generous on purpose: WezTerm runs on
+  -- Windows and `ck status` runs in WSL, and the two clocks can drift apart
+  -- (a known WSL2 issue after sleep/distro restart). A small window here would
+  -- make the status disappear forever when that happens.
+  state_max_age = 21600,                -- seconds (6 h) before status is considered stale
   palette_key = { key = 'p', mods = 'LEADER' },     -- LEADER+P opens the palette
 }
 return M
