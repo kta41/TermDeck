@@ -7,6 +7,8 @@ format = """
  $rust\
  $cmd_duration\
  $line_break\
+ $time\
+ $username\
  $character"""
 
 # Línea en blanco entre prompts, respira mejor
@@ -30,7 +32,17 @@ modified = "[*${count}](yellow)"
 # Muestra cuánto tardó el comando si pasó de 2s
 min_time = 2000
 
-# El prompt en sí: verde si el último comando fue OK, rojo si falló
+[time]
+disabled = false
+format = '\[[$time]($style)\] '
+time_format = '%H:%M'
+style = "#9399b2"   # gris sutil Catppuccin
+
+[username]
+show_always = true          # por defecto solo se muestra en SSH/root
+style_user = "bold #89b4fa" # azul Catppuccin; pon el que quieras
+format = "[$user ]($style)"
+
 [character]
-success_symbol = "[❯](bold green)"
-error_symbol = "[❯](bold red)"
+success_symbol = "[>](bold green)"
+error_symbol = "[>](bold red)"
