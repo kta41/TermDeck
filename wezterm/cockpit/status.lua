@@ -7,29 +7,6 @@ local wsl = require 'cockpit.wsl'
 
 local M = {}
 
--- TEMPORARY DEBUG (remove after diagnosing): appends to %TEMP%\cockpit-debug.log
-local function dbg(msg)
-  pcall(function()
-    local p = (os.getenv('TEMP') or '.') .. '\\cockpit-debug.log'
-    local f = io.open(p, 'a')
-    if f then
-      f:write(os.date('%H:%M:%S') .. ' ' .. msg .. '\n')
-      f:close()
-    end
-  end)
-end
-
--- load-time self-test: clocks + UNC read + full parse, exactly as read_state does
-do
-  local s = wsl.read_state()
-  local n = 0
-  for _ in pairs(s) do
-    n = n + 1
-  end
-  dbg(('LOAD os.time=%d path=[%s] nkeys=%d updated=[%s] k8s_state=[%s] argocd=[%s]')
-    :format(os.time(), wsl.state_path(), n, tostring(s.updated), tostring(s.k8s_state), tostring(s.argocd)))
-end
-
 local C = {
   blue = '#89b4fa', grey = '#9399b2', dim = '#6c7086',
   green = '#a6e3a1', red = '#f38ba8', yellow = '#f9e2af',
@@ -42,22 +19,15 @@ end
 
 function M.update(window, pane)
   pcall(function()
-    local okd, d = pcall(function()
-      return pane:get_domain_name()
-    end)
-    local dom = okd and tostring(d) or 'ERROR'
     if not wsl.pane_is_wsl(pane) then
-      dbg('EVENT domain=[' .. dom .. '] not-WSL → cleared')
       window:set_right_status('')
       return
     end
     local s = wsl.read_state()
     local updated = tonumber(s.updated or '') or 0
     local age = os.time() - updated
-    dbg('EVENT domain=[' .. dom .. '] updated=' .. updated .. ' age=' .. age .. ' keys=' .. tostring(next(s) ~= nil))
     local segs = {}
     if updated == 0 or age > cfg.state_max_age then
-      dbg('EVENT → no-data branch')
       add(segs, C.dim, ' cockpit · no data ')
     elseif s.k8s_state and s.k8s_state ~= 'none' then
       add(segs, C.blue, '☸ ' .. ((s.k8s_context ~= '' and s.k8s_context) or '?'))
@@ -76,7 +46,6 @@ function M.update(window, pane)
       end
     end
     window:set_right_status(wezterm.format(segs))
-    dbg('EVENT rendered segments=' .. tostring(#segs))
   end)
 end
 
