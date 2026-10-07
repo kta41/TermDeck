@@ -1,5 +1,9 @@
+<div align="center">
+
 # TermDeck 🚀
 > *A high-performance terminal cockpit uniting WezTerm, Starship, and custom WSL automation.*
+
+</div>
 
 <p align="center">
   <img alt="Lua" src="https://img.shields.io/badge/Lua-55.4%25-blue?style=flat-square&logo=lua">
