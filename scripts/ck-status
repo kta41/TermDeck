@@ -59,7 +59,7 @@ else
   fi
 fi
 
-# --- ArgoCD CLI (own throttle) ---
+# --- ArgoCD CLI + app health (own throttle) ---
 if [ "$force" -eq 1 ] || ck_throttled argo_checked "$CK_ARGO_EVERY"; then
   ck_state_set argo_checked "$(ck_now)"
   if ! ck_have argocd; then
@@ -68,6 +68,19 @@ if [ "$force" -eq 1 ] || ck_throttled argo_checked "$CK_ARGO_EVERY"; then
     ck_state_set argocd ready
   else
     ck_state_set argocd error
+  fi
+  # Application health, read-only via the CRD (works without the argocd CLI):
+  # writes argo_apps=<total> argo_bad=<degraded> for the WezTerm status bar.
+  if [ "$(ck_state_get k8s_state)" = "ok" ] && [ "$(ck_state_get argocd_kube)" = "1" ] && ck_have jq; then
+    counts="$(timeout 8 kubectl get applications.argoproj.io -A -o json 2>/dev/null \
+      | jq -r '([.items[]]|length|tostring) + " " + ([.items[]|select(.status.health.status != "Healthy" or .status.sync.status != "Synced")]|length|tostring)' \
+      2>/dev/null || true)"
+    total="${counts%% *}"; bad="${counts##* }"
+    case "$total" in ''|*[!0-9]*) : ;; *)
+      ck_state_set argo_apps "$total"
+      case "$bad" in ''|*[!0-9]*) ck_state_set argo_bad 0 ;; *) ck_state_set argo_bad "$bad" ;; esac
+      ;;
+    esac
   fi
 fi
 

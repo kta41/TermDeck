@@ -59,8 +59,14 @@ WezTerm (UI layer)                      Starship (prompt layer)
 
 | Shortcut | Action |
 | :--- | :--- |
-| `LEADER` then `P` | Cockpit fuzzy palette (Git / Repo / K8s / Argo / CI) |
+| `LEADER` then `P` | Cockpit fuzzy palette (Git / Repo / K8s / Argo / CI / PR) |
 | All other shortcuts | Unchanged (tmux-style, `LEADER` + `1..9`, etc.) |
+
+### Palette Highlights
+
+* **Split mode:** long-running operations have `(split)` variants (`pods → logs (-f, split)`, `rollout status (split)`, `Argo app sync/logs (split)`) that run in an automatic vertical split pane; close it with `CTRL+SHIFT+W`.
+* **Pull requests:** on GitHub repos with `gh` installed: `PR: list / create (title + body) / checks (current branch) / merge (editable flags)`.
+* **ArgoCD health at a glance:** the status bar shows `⎈ 9✓` in green, or `⎈ 8✓1✗` in red when an app is not Healthy/Synced. |
 
 ### Direct CLI (Works standalone without WezTerm)
 
@@ -80,7 +86,7 @@ ck argocd detect|apps|names|get|sync|refresh|history|logs <app>
 1. **Set up the symlinks** shown above (Windows: `New-Item -ItemType SymbolicLink`; WSL: `ln -s`).
 2. **Hook into your shell** by adding this line at the end of `~/.bashrc` (WSL Debian):
    ```bash
-   source /mnt/c/dev/TermDeck/scripts/shell-hook.sh
+   source /mnt/c/dev/dotfiles/scripts/shell-hook.sh
    ```
 3. **Ensure line endings (LF):** Scripts must keep **LF** endings (`.gitattributes` enforces this; note that on `/mnt/c`, CRLF breaks bash scripts).
 
@@ -89,7 +95,7 @@ ck argocd detect|apps|names|get|sync|refresh|history|logs <app>
 ## 📂 Repository Structure
 
 * `wezterm/wezterm.lua` — Base configuration + guarded (`pcall`) cockpit loading.
-* `wezterm/cockpit/` — Modular UI components: `init` (wiring), `config` (constants), `wsl` (WezTerm⇄WSL bridge), `util` (send/pickers), `status`, `palette`, and domain entries (`git`, `k8s`, `argocd`, `ci`).
+* `wezterm/cockpit/` — Modular UI components: `init` (wiring), `config` (constants), `wsl` (WezTerm⇄WSL bridge), `util` (send/split/pickers), `status`, `palette`, and domain entries (`git`, `k8s`, `argocd`, `ci`, `pr`).
 * `scripts/` — The `ck` command dispatcher + specialized scripts (`ck-git`, `ck-k8s`, `ck-ci`, `ck-argocd`, `ck-status`), `shell-hook.sh`, and `lib/common.sh`.
 * `starship/starship.toml` — Prompt layout with integrated `kubernetes` module.
 * `wezterm/fonts/` — JetBrainsMono Nerd Font, licensed under the SIL Open Font License 1.1 (see `wezterm/fonts/OFL.txt`).
@@ -99,5 +105,5 @@ ck argocd detect|apps|names|get|sync|refresh|history|logs <app>
 ## 💡 Verified Environment Notes
 
 * Tested on **WezTerm `20240203`**, WSL2 Debian, using `kubectl` bound to the `k3s` binary.
-* **Graceful Degradation:** If `gh`, `glab`, or the `argocd` CLI are missing, those palette sections remain hidden automatically until the tools are installed.
+* **Graceful Degradation:** `gh` is installed (PR entries plus full CI read/write on GitHub repos); if `glab` or the `argocd` CLI are missing, those palette sections stay hidden until installed.
 * **Resilience:** If the k3s API drops, the status bar safely displays `☸ ctx · ns` with a red indicator, and K8s pickers report *"no results"* instead of locking up the terminal.

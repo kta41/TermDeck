@@ -10,6 +10,7 @@ local gitmod = require 'cockpit.git'
 local k8smod = require 'cockpit.k8s'
 local argomod = require 'cockpit.argocd'
 local cimod = require 'cockpit.ci'
+local prmod = require 'cockpit.pr'
 
 local M = {}
 
@@ -90,6 +91,9 @@ function M.open(window, pane)
   argomod.build(add, ctx)
   if ci.ci and ci.ci ~= 'none' then
     cimod.build(add, ctx)
+  end
+  if in_repo and ctx.provider == 'github' and c.gh then
+    prmod.build(add, ctx)
   end
 
   window:perform_action(

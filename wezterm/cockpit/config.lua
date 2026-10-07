@@ -11,5 +11,8 @@ local M = {
   -- make the status disappear forever when that happens.
   state_max_age = 21600,                -- seconds (6 h) before status is considered stale
   palette_key = { key = 'p', mods = 'LEADER' },     -- LEADER+P opens the palette
+  -- Background of the right-status "chip" (context · ns · dot). Slightly
+  -- darker than the titlebar so it reads as a chip; tune it here.
+  status_bg = '#181825',
 }
 return M

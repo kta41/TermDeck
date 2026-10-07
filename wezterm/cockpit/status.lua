@@ -13,6 +13,9 @@ local C = {
 }
 
 local function add(segs, color, text)
+  -- Explicit background on every cell: the chip always covers the full text
+  -- (plus the padding spaces below), instead of relying on theme defaults.
+  table.insert(segs, { Background = { Color = cfg.status_bg } })
   table.insert(segs, { Foreground = { Color = color } })
   table.insert(segs, { Text = text })
 end
@@ -30,19 +33,29 @@ function M.update(window, pane)
     if updated == 0 or age > cfg.state_max_age then
       add(segs, C.dim, ' cockpit · no data ')
     elseif s.k8s_state and s.k8s_state ~= 'none' then
-      add(segs, C.blue, '☸ ' .. ((s.k8s_context ~= '' and s.k8s_context) or '?'))
+      -- leading/trailing spaces widen the chip on the X axis
+      add(segs, C.blue, ' ☸ ' .. ((s.k8s_context ~= '' and s.k8s_context) or '?'))
       if s.k8s_namespace and s.k8s_namespace ~= '' then
         add(segs, C.grey, ' · ' .. s.k8s_namespace)
       end
       if s.k8s_state == 'ok' then
-        add(segs, C.green, ' ●')
+        add(segs, C.green, ' ● ')
       elseif s.k8s_state == 'down' then
-        add(segs, C.red, ' ●')
+        add(segs, C.red, ' ● ')
       else
-        add(segs, C.yellow, ' ○')
+        add(segs, C.yellow, ' ○ ')
       end
-      if s.argocd == 'ready' then
-        add(segs, C.green, '  ⎈ argo')
+      -- ArgoCD badge: app counts when known (argo_apps), CLI-only otherwise
+      local apps = tonumber(s.argo_apps or '')
+      if apps and apps > 0 then
+        local bad = tonumber(s.argo_bad or '') or 0
+        if bad > 0 then
+          add(segs, C.red, '  ⎈ ' .. (apps - bad) .. '✓' .. bad .. '✗ ')
+        else
+          add(segs, C.green, '  ⎈ ' .. apps .. '✓ ')
+        end
+      elseif s.argocd == 'ready' then
+        add(segs, C.green, '  ⎈ argo ')
       end
     end
     window:set_right_status(wezterm.format(segs))

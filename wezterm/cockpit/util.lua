@@ -29,6 +29,26 @@ function M.open_url(window, url)
   wezterm.open_with(url)
 end
 
+-- Runs a command in a new vertical split pane (same WSL domain as the current
+-- pane). Your pane stays intact; close the split later with CTRL+SHIFT+W.
+-- Split mode always presses Enter (editability only makes sense in-pane).
+function M.split_run(window, pane, cmd)
+  local ok = pcall(function()
+    window:perform_action(act.SplitVertical { domain = 'CurrentPaneDomain' }, pane)
+    -- SplitVertical focuses the new pane; it becomes the active one
+    local target = window:active_pane()
+    if target and target:pane_id() ~= pane:pane_id() then
+      window:perform_action(act.SendString { string = cmd .. '\r' }, target)
+    else
+      -- fallback: the split did not focus in time, type into the current pane
+      M.send(window, pane, cmd)
+    end
+  end)
+  if not ok then
+    M.send(window, pane, cmd)
+  end
+end
+
 -- Chained picker: runs a ck subcommand inside WSL, shows a fuzzy
 -- InputSelector and sends template with the selection.
 -- p = { title, ck_args, template, field, enter, cwd }
@@ -63,10 +83,11 @@ function M.pick(window, pane, p)
             chosen = sel:match(p.field) or sel
           end
           local pre, post = p.template:match '^(.*)%%s(.*)$'
-          if pre then
-            M.send(w2, p2, pre .. chosen .. post, p.enter)
+          local text = pre and (pre .. chosen .. post) or (p.template .. chosen)
+          if p.split then
+            M.split_run(w2, p2, text)
           else
-            M.send(w2, p2, p.template .. chosen, p.enter)
+            M.send(w2, p2, text, p.enter)
           end
         end
       end),

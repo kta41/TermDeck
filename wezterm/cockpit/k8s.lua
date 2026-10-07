@@ -27,6 +27,15 @@ function M.build(add, ctx)
       cwd = cwd,
     })
   end)
+  add('K8s: pods → logs (-f, split)', function(w, p)
+    util.pick(w, p, {
+      title = 'Pod → logs (new split pane)',
+      ck_args = 'k8s pods --names',
+      template = 'kubectl logs -f %s',
+      split = true,
+      cwd = cwd,
+    })
+  end)
   add('K8s: port-forward (pod)', function(w, p)
     util.pick(w, p, {
       title = 'Pod → port-forward (edit ports before pressing Enter)',
@@ -42,6 +51,15 @@ function M.build(add, ctx)
       title = 'Deployment → rollout status',
       ck_args = 'k8s deployments --names',
       template = 'kubectl rollout status deployment/%s',
+      cwd = cwd,
+    })
+  end)
+  add('K8s: deployment → rollout status (split)', function(w, p)
+    util.pick(w, p, {
+      title = 'Deployment → rollout status (new split pane)',
+      ck_args = 'k8s deployments --names',
+      template = 'kubectl rollout status deployment/%s',
+      split = true,
       cwd = cwd,
     })
   end)

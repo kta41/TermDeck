@@ -53,6 +53,24 @@ function M.build(add, ctx)
         cwd = cwd,
       })
     end)
+    add('Argo: app → logs (split)', function(w, p)
+      util.pick(w, p, {
+        title = 'App → logs (new split pane)',
+        ck_args = 'argocd names',
+        template = 'argocd app logs %s',
+        split = true,
+        cwd = cwd,
+      })
+    end)
+    add('Argo: app → sync (split)', function(w, p)
+      util.pick(w, p, {
+        title = 'App → sync (new split pane)',
+        ck_args = 'argocd names',
+        template = 'argocd app sync %s',
+        split = true,
+        cwd = cwd,
+      })
+    end)
   elseif ar == 'absent' and kube_fallback then
     add('Argo: applications (read-only, kubectl)', function(w, p)
       util.send(w, p, 'kubectl get applications.argoproj.io -A')
