@@ -16,7 +16,20 @@ config.scrollback_lines = 10000
 config.hide_tab_bar_if_only_one_tab = true
 config.use_fancy_tab_bar = true
 -- config.tab_bar_at_bottom = true
--- config.window_decorations = 'RESIZE'  -- sin barra de título
+-- Plan B: botones de ventana integrados en la tab bar
+config.window_decorations = 'INTEGRATED_BUTTONS|RESIZE'
+config.integrated_title_buttons = { 'Hide', 'Maximize', 'Close' }
+
+-- Los botones viven en la tab bar → no se puede ocultar
+config.hide_tab_bar_if_only_one_tab = false
+
+-- Que la barra funda con el fondo (Catppuccin Mocha)
+config.window_frame = {
+  font = wezterm.font 'JetBrainsMono Nerd Font',
+  font_size = 10.0,
+  active_titlebar_bg = '#1e1e2e',
+  inactive_titlebar_bg = '#1e1e2e',
+}
 
 -- Opcional W11: blur acrílico (requiere opacity < 1)
 -- config.window_background_opacity = 0.92
@@ -70,7 +83,7 @@ config.keys = {
   { key = 'j', mods = 'LEADER|SHIFT', action = act.AdjustPaneSize { 'Down',  2 } },
   { key = 'k', mods = 'LEADER|SHIFT', action = act.AdjustPaneSize { 'Up',    2 } },
   { key = 'l', mods = 'LEADER|SHIFT', action = act.AdjustPaneSize { 'Right', 2 } },
-
+  { key = 'f', mods = 'LEADER', action = act.ToggleFullScreen },
   -- Tabs y launcher
   { key = 't', mods = 'LEADER', action = act.SpawnTab 'CurrentPaneDomain' },
   { key = 's', mods = 'LEADER', action = act.ShowLauncher },
