@@ -19,13 +19,13 @@ case "$cmd" in
     quiet=0
     for a in "$@"; do [ "$a" = "-q" ] && quiet=1; done
     if [ "$quiet" -eq 1 ]; then
-      for t in git kubectl k3s gh glab argocd jq curl; do
+      for t in git kubectl k3s gh glab argocd jq curl zellij; do
         if ck_have "$t"; then printf '%s=1 ' "$t"; else printf '%s=0 ' "$t"; fi
       done
       echo
     else
       echo "cockpit environment (WSL):"
-      for t in git kubectl k3s gh glab argocd jq curl; do
+      for t in git kubectl k3s gh glab argocd jq curl zellij; do
         if ck_have "$t"; then
           printf '  %-8s %s✓%s %s\n' "$t" "$CK_C_G" "$CK_C_0" "$(command -v "$t")"
         else
@@ -38,7 +38,7 @@ case "$cmd" in
     # one-shot context for the WezTerm palette: caps + repo + provider + CI.
     # Local operations only (no network) so it is fast; run it in the pane cwd.
     caps=""
-    for t in git kubectl k3s gh glab argocd jq curl; do
+    for t in git kubectl k3s gh glab argocd jq curl zellij; do
       if ck_have "$t"; then caps="$caps$t=1 "; else caps="$caps$t=0 "; fi
     done
     inrepo=0 prov="none" url="" ci=none
@@ -53,6 +53,13 @@ case "$cmd" in
       fi
     fi
     echo "ctx_pwd=$PWD $caps in_repo=$inrepo provider=$prov url=$url ci=$ci"
+    ;;
+  helpscreen)
+    # static keybinding cheat sheet; ANY key closes the tab (Esc included)
+    cat "$CK_SRC_DIR/HELP.txt"
+    echo
+    printf '%s' 'Press any key to close this tab... '
+    read -r -s -n 1 _dummy
     ;;
   help|*)
     cat <<'EOF'

@@ -94,6 +94,7 @@ ck argocd detect|apps|names|get|sync|refresh|history|logs <app>
    source /mnt/c/dev/dotfiles/scripts/shell-hook.sh
    ```
 3. **Ensure line endings (LF):** Scripts must keep **LF** endings (`.gitattributes` enforces this; note that on `/mnt/c`, CRLF breaks bash scripts).
+4. **Session layer (Zellij):** download the `zellij-x86_64-unknown-linux-musl` release into `~/.local/bin/zellij` and symlink `~/.config/zellij` to this repo's `zellij/` directory.
 
 ---
 
@@ -103,6 +104,7 @@ ck argocd detect|apps|names|get|sync|refresh|history|logs <app>
 * `wezterm/cockpit/` — Modular UI components: `init` (wiring), `config` (constants), `wsl` (WezTerm⇄WSL bridge), `util` (send/split/pickers), `status`, `palette`, and domain entries (`git`, `k8s`, `argocd`, `ci`, `pr`).
 * `scripts/` — The `ck` command dispatcher + specialized scripts (`ck-git`, `ck-k8s`, `ck-ci`, `ck-argocd`, `ck-status`), `shell-hook.sh`, and `lib/common.sh`.
 * `starship/starship.toml` — Prompt layout with integrated `kubernetes` module.
+* `zellij/` — Zellij session layer (`config.kdl`, deployed via symlink to `~/.config/zellij`).
 * `wezterm/fonts/` — JetBrainsMono Nerd Font, licensed under the SIL Open Font License 1.1 (see `wezterm/fonts/OFL.txt`).
 
 ---
@@ -111,4 +113,5 @@ ck argocd detect|apps|names|get|sync|refresh|history|logs <app>
 
 * Tested on **WezTerm `20240203`**, WSL2 Debian, using `kubectl` bound to the `k3s` binary.
 * **Graceful Degradation:** `gh` is installed (PR entries plus full CI read/write on GitHub repos); if `glab` or the `argocd` CLI are missing, those palette sections stay hidden until installed.
+* **Zellij session layer:** open or re-attach the `cockpit` session from the palette (`Cockpit: zellij session`) or the launcher; its bottom bar shows contextual shortcuts and sessions survive closing WezTerm.
 * **Resilience:** If the k3s API drops, the status bar safely displays `☸ ctx · ns` with a red indicator, and K8s pickers report *"no results"* instead of locking up the terminal.

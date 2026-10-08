@@ -1,0 +1,63 @@
+================================================================
+              TERMINAL COCKPIT — KEYBOARD MAP
+================================================================
+
+PANES & TABS
+  CTRL+SHIFT+D ........ split side-by-side
+  CTRL+SHIFT+B ........ split top/bottom
+  CTRL+SHIFT+W ........ close current pane (confirms first)
+  CTRL+SHIFT+arrows ... move focus between panes
+  CTRL+ALT+arrows ..... resize current pane
+  CTRL+SHIFT+Z ........ toggle pane zoom
+  LEADER 1..9 ......... jump to tab N        (leader = CTRL+A)
+
+COPY & PASTE
+  CTRL+C .............. copy selection (plain CTRL+C when nothing
+                        is selected)
+  CTRL+V .............. paste
+
+COCKPIT
+  LEADER P / F9 ....... command palette (fuzzy search)
+  CTRL+H .............. this help screen — press ANY KEY to close
+
+STATUS BAR (top right)
+  ☸ ctx · ns ● ....... k8s context and namespace; the dot is the
+                       API state: green = up, red = down,
+                       yellow = no data yet
+  ⎈ 9✓ or 8✓1✗ ...... ArgoCD applications: healthy / degraded
+
+PALETTE QUICK PICKS  (LEADER P or F9, then type to filter)
+  Git ................ status · diff · log · pull · push
+                       stash list/push/pop · branch switch
+  Git sync ........... add all + commit (asks for the message)
+                       + push, in one shot
+  Repo / PR .......... open repo or PRs in browser · gh pr
+                       list/create/checks/merge (GitHub + gh)
+  K8s ................ pods · logs · describe · port-forward
+                       deployments · services · events
+                       namespace switch · context switch
+  Argo ............... applications (read-only via kubectl)
+  CI ................. pipelines · failed runs · logs · retry
+                       (repos with .github/workflows or GitLab CI)
+  (split) variants ... run the command in a side pane so your
+                       pane stays free; close it with CTRL+SHIFT+W
+
+ZELLIJ (sessions — runs inside a pane; its bottom bar shows the shortcuts)
+  open / re-attach .. palette 'Cockpit: zellij session' or the WezTerm
+                      launcher — creates/attaches the 'cockpit' session
+  CTRL+P ............ pane mode: n new · x close · w floating ·
+                      hjkl/arrows focus · f fullscreen
+  CTRL+T ............ tab mode: n new · r rename · 1..9 jump
+  CTRL+S ............ scroll mode: arrows scroll · / search · q exit
+  CTRL+O ............ session mode: d detach (re-attach later)
+  ALT+arrows ........ move focus without entering a mode
+  CTRL+G ............ lock / unlock ALL zellij keys
+  CTRL+Q ............ quit the session
+  Sessions survive closing WezTerm — reopen with the same entry.
+
+TIPS
+  Everything the palette does is typed as a plain command in
+  your pane: it lands in shell history and you can edit it
+  (port-forward arrives WITHOUT pressing Enter on purpose).
+
+================================================================

@@ -1,0 +1,24 @@
+// zellij/config.kdl — session layer of the terminal cockpit.
+// Deployed as a symlink: ~/.config/zellij -> /mnt/c/dev/dotfiles/zellij
+// Docs: https://zellij.dev/documentation/options
+
+theme "catppuccin-mocha"
+
+// Minimal chrome: no pane frames, compact status/hints bar
+pane_frames false
+default_layout "compact"
+
+// Mouse and generous scrollback
+mouse_mode true
+scroll_buffer_size 100000
+
+// Clipboard: yanks inside zellij land in the WINDOWS clipboard
+copy_command "clip.exe"
+
+// Session recovery: persist sessions so they can be resurrected
+session_serialization true
+serialize_pane_viewport true
+
+// Default keybindings are kept (documented in scripts/HELP.txt):
+//   CTRL+P pane · CTRL+T tab · CTRL+S scroll/search · CTRL+O session
+//   CTRL+G lock · CTRL+Q quit · ALT+arrows focus

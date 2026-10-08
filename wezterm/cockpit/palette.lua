@@ -97,6 +97,19 @@ function M.open(window, pane)
       util.toast(w, 'status refreshed')
     end)
 
+    if c.zellij == '1' then
+      add('Cockpit: zellij session', function(w, p)
+        -- opens (or re-attaches to) the 'cockpit' session in a new tab;
+        -- quote-free argv, as required by this WezTerm build
+        w:perform_action(
+          act.SpawnCommandInNewTab {
+            args = { cfg.wsl_exe, '-d', cfg.distro, '--', cfg.zellij_bin, 'attach', '--create', 'cockpit' },
+          },
+          p
+        )
+      end)
+    end
+
     if in_repo and c.git then
       gitmod.build(add, ctx)
     end

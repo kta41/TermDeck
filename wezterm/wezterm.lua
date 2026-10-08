@@ -54,6 +54,8 @@ config.inactive_pane_hsb = { saturation = 0.85, brightness = 0.7 }
   config.launch_menu = {
     { label = 'PowerShell 7', args = { 'pwsh.exe', '-NoLogo' } },
     { label = 'PowerShell 5', args = { 'powershell.exe', '-NoLogo' } },
+    -- session layer of the cockpit (binary path kept in sync with cockpit/config.lua)
+    { label = 'Zellij (cockpit session)', args = { 'wsl.exe', '-d', 'Debian', '--', '/home/Kta41/.local/bin/zellij', 'attach', '--create', 'cockpit' } },
   }
 end
 

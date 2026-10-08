@@ -4,5 +4,6 @@
 scripts/** text eol=lf
 *.lua text eol=lf
 *.toml text eol=lf
+*.kdl text eol=lf
 *.md text eol=lf
 *.ttf binary
