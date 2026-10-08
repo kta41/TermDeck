@@ -52,7 +52,7 @@ case "$cmd" in
       elif [ -f "$root/.gitlab-ci.yml" ]; then ci=gitlab
       fi
     fi
-    echo "$caps in_repo=$inrepo provider=$prov url=$url ci=$ci"
+    echo "ctx_pwd=$PWD $caps in_repo=$inrepo provider=$prov url=$url ci=$ci"
     ;;
   help|*)
     cat <<'EOF'

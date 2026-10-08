@@ -6,14 +6,63 @@
 -- invoked directly with plain space-separated arguments. Never pass quotes,
 -- parentheses or shell syntax inside `args`; put that logic inside the ck
 -- scripts themselves (they run under a real bash).
+-- REVISED (also verified on this build): run_child_process DOES work with
+-- wsl.exe when every argument is a separate argv element and none contains
+-- quotes — that combination spawns with hidden pipes (no console flash).
+local wezterm = require 'wezterm'
 local cfg = require 'cockpit.config'
 
 local M = {}
 
+-- Builds the Windows UNC path for a relative WSL path ('.cache/x/y').
+local function wsl_unc(rel)
+  return '\\\\wsl.localhost\\' .. cfg.distro .. '\\home\\' .. cfg.wsl_user .. '\\'
+    .. rel:gsub('/', '\\')
+end
+
 -- Ruta UNC de Windows hacia el archivo de estado del usuario en WSL.
 function M.state_path()
-  return '\\\\wsl.localhost\\' .. cfg.distro .. '\\home\\' .. cfg.wsl_user .. '\\'
-    .. (cfg.state_rel_path:gsub('/', '\\'))
+  return wsl_unc(cfg.state_rel_path)
+end
+
+-- Palette context pre-warmed by the shell hook. Returns the parsed table
+-- only when it matches the requested cwd; nil otherwise (missing/mismatch).
+function M.read_context(cwd)
+  if not cwd then
+    return nil
+  end
+  local ok, res = pcall(function()
+    local f = io.open(wsl_unc(cfg.context_rel_path), 'r')
+    if not f then
+      return nil
+    end
+    local t = {}
+    for line in f:lines() do
+      for k, v in line:gmatch '([%w_]+)=(%S*)' do
+        t[k] = v
+      end
+    end
+    f:close()
+    if t.ctx_pwd ~= cwd then
+      return nil
+    end
+    return t
+  end)
+  if ok then
+    return res
+  end
+  return nil
+end
+
+-- Self-heals the context cache after the (slow) spawn fallback.
+function M.write_context(raw)
+  pcall(function()
+    local f = io.open(wsl_unc(cfg.context_rel_path), 'w')
+    if f then
+      f:write(raw)
+      f:close()
+    end
+  end)
 end
 
 -- Lee el estado key=value escrito por ck-status. Devuelve tabla (vacía si error).
@@ -43,23 +92,26 @@ function M.read_state()
 end
 
 -- Runs a ck subcommand inside WSL. args = 'k8s pods --names' (quote-free!).
+-- Every token becomes a separate argv element: no shell, no quotes, and the
+-- child spawns with hidden pipes (no console window flash).
 -- opts.cwd = initial Linux path (must not contain spaces).
 -- Returns stdout (string, possibly empty) or nil when spawning failed.
 function M.ck(args, opts)
-  local s = '"' .. cfg.wsl_exe .. '" -d ' .. cfg.distro
+  local argv = { cfg.wsl_exe, '-d', cfg.distro }
   if opts and opts.cwd then
-    s = s .. ' --cd ' .. opts.cwd
+    table.insert(argv, '--cd')
+    table.insert(argv, opts.cwd)
   end
-  s = s .. ' -- ' .. cfg.ck_path .. ' ' .. args .. ' 2>/dev/null'
-  local okf, f = pcall(io.popen, s)
-  if not okf or not f then
-    return nil
+  table.insert(argv, '--')
+  table.insert(argv, cfg.ck_path)
+  for tok in args:gmatch '%S+' do
+    table.insert(argv, tok)
   end
-  local out = f:read '*a'
-  pcall(function()
-    f:close()
-  end)
-  return out
+  local ok, out = wezterm.run_child_process(argv)
+  if ok then
+    return out
+  end
+  return nil
 end
 
 -- ¿El pane actual pertenece al dominio WSL del cockpit?

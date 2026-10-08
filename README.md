@@ -69,7 +69,7 @@ WezTerm (UI layer)                      Starship (prompt layer)
 
 ### Palette Highlights
 
-* **Split mode:** long-running operations have `(split)` variants (`pods → logs (-f, split)`, `rollout status (split)`, `Argo app sync/logs (split)`) that run in an automatic vertical split pane; close it with `CTRL+SHIFT+W`.
+* **Split mode:** long-running operations have `(split)` variants (`pods → logs (-f, split)`, `rollout status (split)`, `Argo app sync/logs (split)`) that run in an automatic side-by-side split pane (like `CTRL+SHIFT+D`); close it with `CTRL+SHIFT+W`.
 * **Pull requests:** on GitHub repos with `gh` installed: `PR: list / create (title + body) / checks (current branch) / merge (editable flags)`.
 * **ArgoCD health at a glance:** the status bar shows `⎈ 9✓` in green, or `⎈ 8✓1✗` in red when an app is not Healthy/Synced. |
 

@@ -36,8 +36,10 @@ function M.open(window, pane)
 
   local entries, actions = {}, {}
   local function add(label, fn)
-    table.insert(entries, { id = tostring(#actions + 1), label = label })
-    actions[tostring(#actions + 1)] = fn
+    -- id == label: makes selection dispatch version-proof (some WezTerm
+    -- builds pass the id to the callback, others the label/text)
+    table.insert(entries, { id = label, label = label })
+    actions[label] = fn
   end
 
   if not wsl.pane_is_wsl(pane) then
@@ -49,12 +51,23 @@ function M.open(window, pane)
     local cwd = wsl.pane_cwd(pane)
     local state = wsl.read_state()
 
-    -- ONE fast spawn for all detection (local only, no network): caps, repo,
-    -- provider and CI. Slow WSL cold starts only delay this single call.
-    local out = wsl.ck('palette', { cwd = cwd }) or ''
-    local c = {}
-    for k, v in out:gmatch '([%w_]+)=(%S*)' do
-      c[k] = v
+    -- Fast path: context pre-warmed per prompt by the shell hook (a plain
+    -- file read — instant, no process spawn, no console flash). Slow path:
+    -- one io.popen spawn, only when the file is missing or belongs to
+    -- another directory.
+    local c = wsl.read_context(cwd)
+    if c then
+      dbg('context from file (pwd match)')
+    else
+      local out = wsl.ck('palette', { cwd = cwd }) or ''
+      c = {}
+      for k, v in out:gmatch '([%w_]+)=(%S*)' do
+        c[k] = v
+      end
+      if next(c) ~= nil then
+        wsl.write_context(out) -- self-heal: next open will be instant
+      end
+      dbg('context from spawn, len=' .. tostring(#out))
     end
     c.git = c.git == '1'
     c.kubectl = c.kubectl == '1'
@@ -105,8 +118,10 @@ function M.open(window, pane)
         fuzzy = true,
         -- NOTE: this WezTerm build uses `choices` (not `entries`)
         choices = entries,
-        action = wezterm.action_callback(function(w2, p2, _, id)
-          local fn = actions[id]
+        action = wezterm.action_callback(function(w2, p2, _, a, b)
+          -- WezTerm builds differ: (event, id, label) vs (event, text).
+          -- Entries use id == label, so matching either is version-proof.
+          local fn = actions[a] or actions[b]
           if fn then
             fn(w2, p2)
           end

@@ -11,7 +11,11 @@ case $- in *i*) ;; *) return 0 2>/dev/null || exit 0 ;; esac
 __ck_hook() {
   printf '\033]7;file://%s%s\033\\' "${HOSTNAME:-localhost}" "$PWD"
   if [ -x "$HOME/.local/bin/ck" ]; then
+    local ckdir="${XDG_CACHE_HOME:-$HOME/.cache}/terminal-cockpit"
     ( "$HOME/.local/bin/ck" status --quiet >/dev/null 2>&1 & )
+    # pre-warm the palette context for THIS directory: WezTerm then opens the
+    # palette instantly (file read) instead of spawning wsl.exe
+    ( "$HOME/.local/bin/ck" palette >"$ckdir/context.tmp" 2>/dev/null && mv "$ckdir/context.tmp" "$ckdir/context" & )
   fi
 }
 

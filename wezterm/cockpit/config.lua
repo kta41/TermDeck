@@ -6,6 +6,7 @@ local M = {
   wsl_exe = 'C:\\Windows\\System32\\wsl.exe', -- absolute path (safer for spawning)
   ck_path = '/mnt/c/dev/dotfiles/scripts/ck', -- called without a shell: no quotes/spaces allowed
   state_rel_path = '.cache/terminal-cockpit/state', -- written by `ck status`
+  context_rel_path = '.cache/terminal-cockpit/context', -- pre-warmed by the shell hook
   caps_ttl = 30,                        -- seconds `ck doctor` is cached in the palette
   -- Staleness window for the right status. Generous on purpose: WezTerm runs on
   -- Windows and `ck status` runs in WSL, and the two clocks can drift apart

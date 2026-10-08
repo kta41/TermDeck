@@ -12,12 +12,22 @@ end
 
 -- Sends text to the active pane, with Enter by default.
 -- enter = false leaves the command editable (e.g. port-forward).
+-- NOTE: this build rejects act.SendString { string = ... } ("Cannot convert
+-- Object to String"), so we use pane:send_text and keep SendString(string)
+-- only as a pcall-protected fallback.
 function M.send(window, pane, text, enter)
   local s = text
   if enter ~= false then
     s = s .. '\r'
   end
-  window:perform_action(act.SendString { string = s }, pane)
+  local ok = pcall(function()
+    pane:send_text(s)
+  end)
+  if not ok then
+    pcall(function()
+      window:perform_action(act.SendString(s), pane)
+    end)
+  end
 end
 
 -- Opens a URL with the Windows default browser.
@@ -29,22 +39,22 @@ function M.open_url(window, url)
   wezterm.open_with(url)
 end
 
--- Runs a command in a new vertical split pane (same WSL domain as the current
--- pane). Your pane stays intact; close the split later with CTRL+SHIFT+W.
--- Split mode always presses Enter (editability only makes sense in-pane).
+-- Runs a command in a new SIDE-BY-SIDE split pane (like CTRL+SHIFT+D), in
+-- the same WSL domain as the current pane. Your pane stays intact; close the
+-- split later with CTRL+SHIFT+W. Split mode always presses Enter.
 function M.split_run(window, pane, cmd)
-  local ok = pcall(function()
-    window:perform_action(act.SplitVertical { domain = 'CurrentPaneDomain' }, pane)
-    -- SplitVertical focuses the new pane; it becomes the active one
+  local done = pcall(function()
+    window:perform_action(act.SplitHorizontal { domain = 'CurrentPaneDomain' }, pane)
+    -- SplitHorizontal focuses the new pane; it becomes the active one
     local target = window:active_pane()
     if target and target:pane_id() ~= pane:pane_id() then
-      window:perform_action(act.SendString { string = cmd .. '\r' }, target)
+      target:send_text(cmd .. '\r')
     else
       -- fallback: the split did not focus in time, type into the current pane
       M.send(window, pane, cmd)
     end
   end)
-  if not ok then
+  if not done then
     M.send(window, pane, cmd)
   end
 end
@@ -77,7 +87,8 @@ function M.pick(window, pane, p)
       fuzzy = true,
       -- NOTE: this WezTerm build uses `choices` (not `entries`)
       choices = entries,
-      action = wezterm.action_callback(function(w2, p2, _, sel)
+      action = wezterm.action_callback(function(w2, p2, _, a, b)
+        local sel = a or b -- version-proof: id or label/text
         if sel and sel ~= '' then
           local chosen = sel
           if p.field then
