@@ -11,16 +11,15 @@ function M.build(add, ctx)
   add('PR: create (title + body)', function(w, p)
     w:perform_action(
       act.PromptInputLine {
-        action_title = 'gh pr create — title',
-        description = 'Title for the pull request',
+        -- NOTE: this build has no `action_title`; description only
+        description = 'gh pr create — title',
         action = wezterm.action_callback(function(w2, p2, title)
           if not title or title == '' then
             return
           end
           w2:perform_action(
             act.PromptInputLine {
-              action_title = 'gh pr create — body',
-              description = 'Body text (plain; empty = --fill from commits)',
+              description = 'gh pr create — body (empty = --fill from commits)',
               action = wezterm.action_callback(function(w3, p3, body)
                 local bodyflag = '--fill'
                 if body and body ~= '' then
