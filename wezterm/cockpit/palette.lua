@@ -11,6 +11,9 @@ local k8smod = require 'cockpit.k8s'
 local argomod = require 'cockpit.argocd'
 local cimod = require 'cockpit.ci'
 local prmod = require 'cockpit.pr'
+local focus = require 'cockpit.focus'
+local notifications = require 'cockpit.notifications'
+local layout = require 'cockpit.layout'
 
 local M = {}
 
@@ -69,6 +72,22 @@ function M.open(window, pane)
       repo_url = repo_url,
       ci = ci,
     }
+
+    add('Cockpit: guardar layout', function(w, p)
+      layout.prompt_save(w, p)
+    end)
+    add('Cockpit: activar/desactivar focus mode', function(w)
+      focus.toggle(w)
+    end)
+    local notification = notifications.read()
+    if notification.app ~= '' and notification.count > 0 then
+      add('Cockpit: enfocar ' .. notification.app, function(w)
+        notifications.focus(w)
+      end)
+      add('Cockpit: limpiar notificaciones', function(w)
+        notifications.clear(w)
+      end)
+    end
 
     add('Cockpit: refresh status', function(w, p)
       wsl.ck('status --force')

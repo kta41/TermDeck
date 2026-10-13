@@ -4,8 +4,15 @@ $wezterm = (Get-Command wezterm.exe -ErrorAction Stop).Source
 $root = Split-Path -Parent $PSScriptRoot
 $config = Join-Path $root 'wezterm\wezterm.lua'
 $cockpitInit = Join-Path $root 'wezterm\cockpit\init.lua'
+$palette = Join-Path $root 'wezterm\cockpit\palette.lua'
 $shellHook = Join-Path $root 'scripts\shell-hook.sh'
 $shellRcfile = Join-Path $root 'scripts\wezterm-bashrc'
+$runtimeFiles = @(
+  (Join-Path $root 'wezterm\cockpit\runtime.lua'),
+  (Join-Path $root 'wezterm\cockpit\focus.lua'),
+  (Join-Path $root 'wezterm\cockpit\notifications.lua'),
+  (Join-Path $root 'wezterm\cockpit\layout.lua')
+)
 
 if (-not (Test-Path -LiteralPath $config)) {
   throw "WezTerm config not found: $config"
@@ -13,11 +20,19 @@ if (-not (Test-Path -LiteralPath $config)) {
 if (-not (Test-Path -LiteralPath $cockpitInit)) {
   throw "Cockpit entry point not found: $cockpitInit"
 }
+if (-not (Test-Path -LiteralPath $palette)) {
+  throw "Cockpit palette not found: $palette"
+}
 if (-not (Test-Path -LiteralPath $shellHook)) {
   throw "Shell hook not found: $shellHook"
 }
 if (-not (Test-Path -LiteralPath $shellRcfile)) {
   throw "WezTerm Bash rcfile not found: $shellRcfile"
+}
+foreach ($runtimeFile in $runtimeFiles) {
+  if (-not (Test-Path -LiteralPath $runtimeFile)) {
+    throw "Cockpit runtime module not found: $runtimeFile"
+  }
 }
 
 $keys = & $wezterm show-keys --lua 2>&1
@@ -27,6 +42,7 @@ if ($LASTEXITCODE -ne 0) {
 
 $source = Get-Content -LiteralPath $config -Raw
 $cockpitSource = Get-Content -LiteralPath $cockpitInit -Raw
+$paletteSource = Get-Content -LiteralPath $palette -Raw
 $shellHookSource = Get-Content -LiteralPath $shellHook -Raw
 foreach ($check in @(
     @{ Name = 'direct Ctrl+P palette'; Pattern = "key = 'p',\s*mods = 'CTRL'" },
@@ -61,6 +77,9 @@ if ($shellHookSource -notmatch '\\033\]2;%s > %s\\007') {
 }
 if ((Get-Content -LiteralPath $shellRcfile -Raw) -notmatch 'shell-hook\.sh') {
   throw 'The WezTerm Bash rcfile does not load the shell hook.'
+}
+if ($paletteSource -notmatch 'focus\.toggle' -or $paletteSource -notmatch 'layout\.prompt_save') {
+  throw 'The cockpit palette does not expose focus and layout actions.'
 }
 
 Write-Output 'PASS: WezTerm config loads and exposes Ctrl+P, Ctrl+H, LEADER+P, F9, and the launcher button.'

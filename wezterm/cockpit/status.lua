@@ -4,6 +4,8 @@
 local wezterm = require 'wezterm'
 local cfg = require 'cockpit.config'
 local wsl = require 'cockpit.wsl'
+local focus = require 'cockpit.focus'
+local notifications = require 'cockpit.notifications'
 
 local M = {}
 
@@ -22,6 +24,15 @@ end
 
 function M.update(window, pane)
   pcall(function()
+    local banner = notifications.banner()
+    if banner ~= '' and not focus.enabled() then
+      window:set_left_status(wezterm.format {
+        { Foreground = { Color = C.blue } },
+        { Text = banner },
+      })
+    else
+      window:set_left_status('')
+    end
     if not wsl.pane_is_wsl(pane) then
       window:set_right_status('')
       return
