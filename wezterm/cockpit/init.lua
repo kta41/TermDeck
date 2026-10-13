@@ -5,6 +5,7 @@ local act = wezterm.action
 local cfg = require 'cockpit.config'
 local status = require 'cockpit.status'
 local palette = require 'cockpit.palette'
+local help = require 'cockpit.help'
 
 local M = {}
 
@@ -34,16 +35,12 @@ function M.setup(config)
     action = wezterm.action_callback(palette.open),
   })
 
-  -- CTRL+H: static keyboard cheat sheet in its own tab.
-  -- `ck helpscreen` prints HELP.txt and waits for ANY key (Esc included).
-  -- All argv tokens are quote-free on purpose (this build mangles quoted
-  -- spawn arguments).
+  -- CTRL+H: native WezTerm help overlay. It does not spawn WSL, so it cannot
+  -- disappear because a script or working directory failed to resolve.
   table.insert(config.keys, {
     key = 'h',
     mods = 'CTRL',
-    action = act.SpawnCommandInNewTab {
-      args = { cfg.wsl_exe, '-d', cfg.distro, '--', cfg.ck_path, 'helpscreen' },
-    },
+    action = wezterm.action_callback(help.open),
   })
 
   return config

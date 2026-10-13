@@ -2,6 +2,31 @@ local wezterm = require 'wezterm'
 local act = wezterm.action
 local config = wezterm.config_builder()
 
+local function cwd_label(pane)
+  local ok, cwd = pcall(function()
+    return pane.current_working_dir
+  end)
+  if not ok or not cwd then
+    return 'WSL'
+  end
+  local path = tostring(cwd):gsub('^wsl://[^/]+', ''):gsub('^file://[^/]*', '')
+  path = path:gsub('/+$', '')
+  if path == '' or path == '/home/Kta41' then
+    return '~'
+  end
+  return path:match('([^/]+)$') or 'WSL'
+end
+
+-- Bash emits OSC 2 with "directory > command"; never display the WSL host
+-- process name as a tab title.
+wezterm.on('format-tab-title', function(tab)
+  local title = tab.active_pane.title
+  if title and title ~= '' and title ~= 'wslhost.exe' then
+    return title
+  end
+  return cwd_label(tab.active_pane) .. ' > shell'
+end)
+
 -- ============ Appearance ============
 config.color_scheme = 'Catppuccin Mocha'
 config.font = wezterm.font 'JetBrainsMono Nerd Font'
@@ -48,13 +73,23 @@ if wezterm.target_triple:find 'windows' then
   config.default_domain = 'WSL:Debian'
 
   -- All distros start in the Linux $HOME (not /mnt/c)
-  config.wsl_domains = wezterm.default_wsl_domains()
-  for _, dom in ipairs(config.wsl_domains) do
-    dom.default_cwd = '~'
-  end
-config.inactive_pane_hsb = { saturation = 0.85, brightness = 0.7 }
+  config.wsl_domains = {
+    {
+      name = 'WSL:Debian',
+      distribution = 'Debian',
+      username = 'Kta41',
+      default_cwd = '~',
+      default_prog = { '/bin/bash', '--rcfile', '/mnt/c/dev/dotfiles/scripts/wezterm-bashrc', '-i' },
+    },
+  }
+  config.inactive_pane_hsb = { saturation = 0.85, brightness = 0.7 }
   -- Launcher: WSL distros add themselves; we add Windows shells
   config.launch_menu = {
+    {
+      label = 'Debian (WSL)',
+      domain = { DomainName = 'WSL:Debian' },
+      args = { '/bin/bash', '--rcfile', '/mnt/c/dev/dotfiles/scripts/wezterm-bashrc', '-i' },
+    },
     { label = 'PowerShell 7', args = { 'pwsh.exe', '-NoLogo' } },
     { label = 'PowerShell 5', args = { 'powershell.exe', '-NoLogo' } },
     -- session layer of the cockpit (binary path kept in sync with cockpit/config.lua)

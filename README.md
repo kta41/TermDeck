@@ -72,6 +72,10 @@ WezTerm (UI layer)                      Starship (prompt layer)
 > creates a tab; right-click opens the WezTerm launcher menu, including the
 > WSL, PowerShell and Zellij entries.
 
+> **Tab titles:** the shell hook publishes the current directory and the last
+> command, so a tab appears as `~ > ls` or `project > git` instead of
+> `wslhost.exe`. Reload the shell hook after installing or updating it.
+
 ### Palette Highlights
 
 * **Split mode:** long-running operations have `(split)` variants (`pods → logs (-f, split)`, `rollout status (split)`, `Argo app sync/logs (split)`) that run in an automatic side-by-side split pane (like `CTRL+SHIFT+D`); close it with `CTRL+SHIFT+W`.

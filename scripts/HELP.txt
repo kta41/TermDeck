@@ -19,7 +19,7 @@ COPY & PASTE
 COCKPIT
   CTRL+P / LEADER P /
   F9 .................. command palette (fuzzy search)
-  CTRL+H .............. this help screen — press ANY KEY to close
+  CTRL+H .............. this help overlay — press Esc to close
 
 STATUS BAR (top right)
   ☸ ctx · ns ● ....... k8s context and namespace; the dot is the

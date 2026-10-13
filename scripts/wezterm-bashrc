@@ -1,0 +1,6 @@
+# WezTerm-specific interactive Bash startup.
+# Keep the user's normal Bash startup, then install the TermDeck prompt hook.
+if [ -f "$HOME/.bashrc" ]; then
+  source "$HOME/.bashrc"
+fi
+source /mnt/c/dev/dotfiles/scripts/shell-hook.sh

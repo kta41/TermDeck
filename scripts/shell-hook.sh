@@ -8,8 +8,22 @@
 # interactive shells only
 case $- in *i*) ;; *) return 0 2>/dev/null || exit 0 ;; esac
 
+# Do not register the hook twice when the user reloads this file.
+if declare -F __ck_hook >/dev/null 2>&1; then
+  return 0
+fi
+
 __ck_hook() {
   printf '\033]7;file://%s%s\033\\' "${HOSTNAME:-localhost}" "$PWD"
+  local dir="${PWD##*/}"
+  [ -z "$dir" ] && dir='/'
+  [ "$PWD" = "$HOME" ] && dir='~'
+  local command
+  command="$(fc -ln -1 2>/dev/null || true)"
+  command="${command#"${command%%[![:space:]]*}"}"
+  local verb="${command%% *}"
+  [ -z "$verb" ] && verb='shell'
+  printf '\033]2;%s > %s\007' "$dir" "$verb"
   if [ -x "$HOME/.local/bin/ck" ]; then
     local ckdir="${XDG_CACHE_HOME:-$HOME/.cache}/terminal-cockpit"
     ( "$HOME/.local/bin/ck" status --quiet >/dev/null 2>&1 & )
