@@ -1,4 +1,4 @@
--- palette.lua — cockpit action palette (LEADER+P or F9).
+-- palette.lua — cockpit action palette (CTRL+P, LEADER+P or F9).
 -- Golden rule: only implemented AND currently available operations are
 -- listed (installed tools, current repo, remote provider, cluster).
 local wezterm = require 'wezterm'
@@ -14,26 +14,7 @@ local prmod = require 'cockpit.pr'
 
 local M = {}
 
--- TEMPORARY DEBUG (remove after diagnosing): appends to %TEMP%\cockpit-debug.log
-local function dbg(msg)
-  pcall(function()
-    local p = (os.getenv('TEMP') or '.') .. '\\cockpit-debug.log'
-    local f = io.open(p, 'a')
-    if f then
-      f:write(os.date('%H:%M:%S') .. ' [palette] ' .. msg .. '\n')
-      f:close()
-    end
-  end)
-end
-
-dbg('module loaded (palette v2: LEADER+P and F9)')
-
 function M.open(window, pane)
-  local okd, dom = pcall(function()
-    return pane:get_domain_name()
-  end)
-  dbg('triggered: domain=' .. tostring(okd and dom or 'ERROR'))
-
   local entries, actions = {}, {}
   local function add(label, fn)
     -- id == label: makes selection dispatch version-proof (some WezTerm
@@ -56,9 +37,7 @@ function M.open(window, pane)
     -- one io.popen spawn, only when the file is missing or belongs to
     -- another directory.
     local c = wsl.read_context(cwd)
-    if c then
-      dbg('context from file (pwd match)')
-    else
+    if not c then
       local out = wsl.ck('palette', { cwd = cwd }) or ''
       c = {}
       for k, v in out:gmatch '([%w_]+)=(%S*)' do
@@ -67,7 +46,6 @@ function M.open(window, pane)
       if next(c) ~= nil then
         wsl.write_context(out) -- self-heal: next open will be instant
       end
-      dbg('context from spawn, len=' .. tostring(#out))
     end
     c.git = c.git == '1'
     c.kubectl = c.kubectl == '1'
@@ -145,11 +123,8 @@ function M.open(window, pane)
   end)
 
   if not ok then
-    dbg('ERROR: ' .. tostring(err))
     util.toast(window, 'cockpit palette error: ' .. tostring(err):sub(1, 120))
     wezterm.log_error('palette: ' .. tostring(err))
-  else
-    dbg('selector shown with ' .. tostring(#entries) .. ' entries')
   end
 end
 

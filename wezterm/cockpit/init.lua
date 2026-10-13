@@ -13,10 +13,16 @@ function M.setup(config)
   config.status_update_interval = 2000
   wezterm.on('update-right-status', status.update)
 
-  -- action palette: LEADER+P (does not clash with the existing LEADER+1..9)
+  -- Keep the leader binding for tmux-style use and provide a direct shortcut.
+  -- Direct CTRL+P must be handled by WezTerm before Zellij sees it.
   table.insert(config.keys, {
     key = cfg.palette_key.key,
     mods = cfg.palette_key.mods,
+    action = wezterm.action_callback(palette.open),
+  })
+  table.insert(config.keys, {
+    key = 'p',
+    mods = 'CTRL',
     action = wezterm.action_callback(palette.open),
   })
 
@@ -29,9 +35,9 @@ function M.setup(config)
   })
 
   -- CTRL+H: static keyboard cheat sheet in its own tab.
-  -- `ck helpscreen` prints HELP.txt and waits for ANY key (Esc included);
-  -- when it exits, the tab closes by itself. All argv tokens are
-  -- quote-free on purpose (this build mangles quoted spawn arguments).
+  -- `ck helpscreen` prints HELP.txt and waits for ANY key (Esc included).
+  -- All argv tokens are quote-free on purpose (this build mangles quoted
+  -- spawn arguments).
   table.insert(config.keys, {
     key = 'h',
     mods = 'CTRL',

@@ -17,7 +17,8 @@ COPY & PASTE
   CTRL+V .............. paste
 
 COCKPIT
-  LEADER P / F9 ....... command palette (fuzzy search)
+  CTRL+P / LEADER P /
+  F9 .................. command palette (fuzzy search)
   CTRL+H .............. this help screen — press ANY KEY to close
 
 STATUS BAR (top right)
@@ -45,7 +46,9 @@ PALETTE QUICK PICKS  (LEADER P or F9, then type to filter)
 ZELLIJ (sessions — runs inside a pane; its bottom bar shows the shortcuts)
   open / re-attach .. palette 'Cockpit: zellij session' or the WezTerm
                       launcher — creates/attaches the 'cockpit' session
-  CTRL+P ............ pane mode: n new · x close · w floating ·
+  CTRL+P (inside WezTerm)
+  .................... command palette; use the Zellij pane mode key
+                       from its own configured prefix when needed
                       hjkl/arrows focus · f fullscreen
   CTRL+T ............ tab mode: n new · r rename · 1..9 jump
   CTRL+S ............ scroll mode: arrows scroll · / search · q exit

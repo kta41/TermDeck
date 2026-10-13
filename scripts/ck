@@ -55,11 +55,18 @@ case "$cmd" in
     echo "ctx_pwd=$PWD $caps in_repo=$inrepo provider=$prov url=$url ci=$ci"
     ;;
   helpscreen)
-    # static keybinding cheat sheet; ANY key closes the tab (Esc included)
+    # Static keybinding cheat sheet; ANY key closes the screen (Esc included).
+    # A direct WezTerm spawn can occasionally provide EOF on stdin. In that
+    # case keep the tab usable instead of letting the command exit immediately.
     cat "$CK_SRC_DIR/HELP.txt"
     echo
     printf '%s' 'Press any key to close this tab... '
-    read -r -s -n 1 _dummy
+    if [ -t 0 ]; then
+      read -r -s -n 1 _dummy || true
+    else
+      echo
+      exec "${SHELL:-bash}" -i
+    fi
     ;;
   help|*)
     cat <<'EOF'

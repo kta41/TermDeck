@@ -59,13 +59,18 @@ WezTerm (UI layer)                      Starship (prompt layer)
 
 | Shortcut | Action |
 | :--- | :--- |
+| `CTRL+P` | Cockpit fuzzy palette (handled by WezTerm before Zellij) |
 | `LEADER` then `P` | Cockpit fuzzy palette (Git / Repo / K8s / Argo / CI / PR) |
 | `F9` | Same palette, no leader needed (alternative trigger) |
 | All other shortcuts | Unchanged (tmux-style, `LEADER` + `1..9`, etc.) |
 
 > **Leader timing:** press `Ctrl+A`, **release it**, then press `p` within the
 > 1-second leader timeout. Holding `Ctrl` while pressing `p` sends `CTRL+P`
-> to the shell instead. If in doubt, use `F9`.
+> to the palette directly. If in doubt, use `F9`.
+
+> **Launcher:** the `+` button is always visible beside the tabs. Left-click
+> creates a tab; right-click opens the WezTerm launcher menu, including the
+> WSL, PowerShell and Zellij entries.
 
 ### Palette Highlights
 

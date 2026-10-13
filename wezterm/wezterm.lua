@@ -15,12 +15,15 @@ config.window_padding = { left = 8, right = 8, top = 6, bottom = 6 }
 config.scrollback_lines = 10000
 config.hide_tab_bar_if_only_one_tab = true
 config.use_fancy_tab_bar = true
+-- The + button creates a tab with left click and opens the launcher menu
+-- with right click. Keep it visible even when the tab bar has one tab.
+config.show_new_tab_button_in_tab_bar = true
 -- config.tab_bar_at_bottom = true
 -- Plan B: window buttons integrated into the tab bar
 config.window_decorations = 'INTEGRATED_BUTTONS|RESIZE'
 config.integrated_title_buttons = { 'Hide', 'Maximize', 'Close' }
 
--- Buttons live in the tab bar → it cannot be hidden
+-- Buttons live in the tab bar -> it cannot be hidden
 config.hide_tab_bar_if_only_one_tab = false
 
 -- Make the bar blend with the background (Catppuccin Mocha)
