@@ -20,6 +20,8 @@ COCKPIT
   CTRL+P / LEADER P /
   F9 .................. command palette (fuzzy search)
   CTRL+H .............. this help overlay — press Esc to close
+  Palette actions ..... save layout · focus mode · attach/detach desktop app
+                        · focus/clear application notifications
 
 STATUS BAR (top right)
   ☸ ctx · ns ● ....... k8s context and namespace; the dot is the
@@ -42,6 +44,13 @@ PALETTE QUICK PICKS  (LEADER P or F9, then type to filter)
                        (repos with .github/workflows or GitLab CI)
   (split) variants ... run the command in a side pane so your
                        pane stays free; close it with CTRL+SHIFT+W
+
+  APPLICATION OVERLAY
+  attach desktop app .. selects a visible Windows window and overlays it on
+                        the WezTerm window; current version is reversible
+  detach desktop app .. restores the selected window to its previous bounds
+  save layout .......... stores the active pane snapshot outside the repository
+  focus mode ........... hides the notification banner while enabled
 
 ZELLIJ (sessions — runs inside a pane; its bottom bar shows the shortcuts)
   open / re-attach .. palette 'Cockpit: zellij session' or the WezTerm

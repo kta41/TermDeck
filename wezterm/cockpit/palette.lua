@@ -14,6 +14,7 @@ local prmod = require 'cockpit.pr'
 local focus = require 'cockpit.focus'
 local notifications = require 'cockpit.notifications'
 local layout = require 'cockpit.layout'
+local embed = require 'cockpit.embed'
 
 local M = {}
 
@@ -78,6 +79,12 @@ function M.open(window, pane)
     end)
     add('Cockpit: activar/desactivar focus mode', function(w)
       focus.toggle(w)
+    end)
+    add('Cockpit: attach desktop app (overlay)', function(w)
+      embed.open(w)
+    end)
+    add('Cockpit: detach desktop app', function(w)
+      embed.detach(w)
     end)
     local notification = notifications.read()
     if notification.app ~= '' and notification.count > 0 then

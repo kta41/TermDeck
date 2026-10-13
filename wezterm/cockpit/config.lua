@@ -6,6 +6,7 @@ local M = {
   wsl_exe = 'C:\\Windows\\System32\\wsl.exe', -- absolute path (safer for spawning)
   ck_path = '/mnt/c/dev/dotfiles/scripts/ck', -- called without a shell: no quotes/spaces allowed
   shell_rcfile = '/mnt/c/dev/dotfiles/scripts/wezterm-bashrc',
+  windows_helper = 'C:\\dev\\dotfiles\\scripts\\termdeck-windows.ps1',
   zellij_bin = '/home/Kta41/.local/bin/zellij', -- session layer (Zellij)
   state_rel_path = '.cache/terminal-cockpit/state', -- written by `ck status`
   context_rel_path = '.cache/terminal-cockpit/context', -- pre-warmed by the shell hook

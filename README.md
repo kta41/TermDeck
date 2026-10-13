@@ -62,6 +62,7 @@ WezTerm (UI layer)                      Starship (prompt layer)
 | `CTRL+P` | Cockpit fuzzy palette (handled by WezTerm before Zellij) |
 | `LEADER` then `P` | Cockpit fuzzy palette (Git / Repo / K8s / Argo / CI / PR) |
 | `F9` | Same palette, no leader needed (alternative trigger) |
+| `CTRL+H` | Updated Cockpit help overlay with current palette actions |
 | All other shortcuts | Unchanged (tmux-style, `LEADER` + `1..9`, etc.) |
 
 > **Leader timing:** press `Ctrl+A`, **release it**, then press `p` within the
@@ -81,6 +82,14 @@ WezTerm (UI layer)                      Starship (prompt layer)
 * **Split mode:** long-running operations have `(split)` variants (`pods → logs (-f, split)`, `rollout status (split)`, `Argo app sync/logs (split)`) that run in an automatic side-by-side split pane (like `CTRL+SHIFT+D`); close it with `CTRL+SHIFT+W`.
 * **Pull requests:** on GitHub repos with `gh` installed: `PR: list / create (title + body) / checks (current branch) / merge (editable flags)`.
 * **ArgoCD health at a glance:** the status bar shows `⎈ 9✓` in green, or `⎈ 8✓1✗` in red when an app is not Healthy/Synced. |
+* **Desktop app overlay:** the Cockpit palette can list visible Windows
+  applications and attach one as a reversible overlay over the WezTerm window.
+  Use `Cockpit: attach desktop app (overlay)` and release it with
+  `Cockpit: detach desktop app`. Exact pane-level placement is not available
+  in WezTerm `20240203` yet; the current implementation intentionally uses the
+  full WezTerm window instead of guessing pane coordinates.
+* **Help stays current:** `CTRL+H` documents the current layout, focus mode,
+  notification and desktop-overlay actions.
 
 ### Direct CLI (Works standalone without WezTerm)
 
@@ -111,7 +120,7 @@ ck argocd detect|apps|names|get|sync|refresh|history|logs <app>
 
 * `wezterm/wezterm.lua` — Base configuration + guarded (`pcall`) cockpit loading.
 * `wezterm/cockpit/` — Modular UI components: `init` (wiring), `config` (constants), `wsl` (WezTerm⇄WSL bridge), `util` (send/split/pickers), `status`, `palette`, and domain entries (`git`, `k8s`, `argocd`, `ci`, `pr`).
-* `scripts/` — The `ck` command dispatcher + specialized scripts (`ck-git`, `ck-k8s`, `ck-ci`, `ck-argocd`, `ck-status`), `shell-hook.sh`, and `lib/common.sh`.
+* `scripts/` — The `ck` command dispatcher + specialized scripts (`ck-git`, `ck-k8s`, `ck-ci`, `ck-argocd`, `ck-status`), `shell-hook.sh`, `termdeck-windows.ps1`, and `lib/common.sh`.
 * `starship/starship.toml` — Prompt layout with integrated `kubernetes` module.
 * `zellij/` — Zellij session layer (`config.kdl`, deployed via symlink to `~/.config/zellij`).
 * `wezterm/fonts/` — JetBrainsMono Nerd Font, licensed under the SIL Open Font License 1.1 (see `wezterm/fonts/OFL.txt`).

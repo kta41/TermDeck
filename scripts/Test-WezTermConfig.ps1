@@ -7,12 +7,14 @@ $cockpitInit = Join-Path $root 'wezterm\cockpit\init.lua'
 $palette = Join-Path $root 'wezterm\cockpit\palette.lua'
 $shellHook = Join-Path $root 'scripts\shell-hook.sh'
 $shellRcfile = Join-Path $root 'scripts\wezterm-bashrc'
+$helpFile = Join-Path $root 'scripts\HELP.txt'
 $runtimeFiles = @(
   (Join-Path $root 'wezterm\cockpit\runtime.lua'),
   (Join-Path $root 'wezterm\cockpit\focus.lua'),
   (Join-Path $root 'wezterm\cockpit\notifications.lua'),
   (Join-Path $root 'wezterm\cockpit\layout.lua')
 )
+$windowsHelper = Join-Path $root 'scripts\termdeck-windows.ps1'
 
 if (-not (Test-Path -LiteralPath $config)) {
   throw "WezTerm config not found: $config"
@@ -28,6 +30,12 @@ if (-not (Test-Path -LiteralPath $shellHook)) {
 }
 if (-not (Test-Path -LiteralPath $shellRcfile)) {
   throw "WezTerm Bash rcfile not found: $shellRcfile"
+}
+if (-not (Test-Path -LiteralPath $helpFile)) {
+  throw "Help file not found: $helpFile"
+}
+if (-not (Test-Path -LiteralPath $windowsHelper)) {
+  throw "Windows helper not found: $windowsHelper"
 }
 foreach ($runtimeFile in $runtimeFiles) {
   if (-not (Test-Path -LiteralPath $runtimeFile)) {
@@ -78,8 +86,14 @@ if ($shellHookSource -notmatch '\\033\]2;%s > %s\\007') {
 if ((Get-Content -LiteralPath $shellRcfile -Raw) -notmatch 'shell-hook\.sh') {
   throw 'The WezTerm Bash rcfile does not load the shell hook.'
 }
-if ($paletteSource -notmatch 'focus\.toggle' -or $paletteSource -notmatch 'layout\.prompt_save') {
-  throw 'The cockpit palette does not expose focus and layout actions.'
+if ($paletteSource -notmatch 'focus\.toggle' -or $paletteSource -notmatch 'layout\.prompt_save' -or $paletteSource -notmatch 'embed\.open') {
+  throw 'The cockpit palette does not expose focus, layout and embed actions.'
+}
+$helpSource = Get-Content -LiteralPath $helpFile -Raw
+foreach ($helpEntry in @('attach desktop app', 'detach desktop app', 'focus mode', 'save layout')) {
+  if ($helpSource -notmatch [regex]::Escape($helpEntry)) {
+    throw "Help is missing the current action: $helpEntry"
+  }
 }
 
 Write-Output 'PASS: WezTerm config loads and exposes Ctrl+P, Ctrl+H, LEADER+P, F9, and the launcher button.'
